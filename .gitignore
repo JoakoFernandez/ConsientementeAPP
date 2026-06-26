@@ -1,0 +1,11 @@
+node_modules/
+dist/
+web-build/
+.expo/
+*.tsbuildinfo
+.env
+.env.local
+*.db
+*.db-journal
+release/
+desktop/release/

@@ -1,0 +1,38 @@
+{
+  "name": "@consientemente/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "electron dist/main.js",
+    "dist": "electron-builder",
+    "pack": "electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.consientemente.app",
+    "productName": "Consientemente",
+    "files": [
+      "dist/**/*",
+      "../app/web-build/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../app/web-build",
+        "to": "web",
+        "filter": ["**/*"]
+      }
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": { "target": ["nsis"] },
+    "mac": { "target": ["dmg"] },
+    "linux": { "target": ["AppImage"] }
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.0",
+    "typescript": "^5.4.0"
+  }
+}

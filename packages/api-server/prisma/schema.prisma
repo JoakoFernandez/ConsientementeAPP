@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentFrequency {
+  PER_SESSION
+  WEEKLY
+  MONTHLY
+}
+
+enum PatientAgeCategory {
+  MINOR
+  ADULT
+}
+
+enum WeekDay {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+model Patient {
+  id               String            @id @default(uuid())
+  dni              String
+  name             String
+  bankAccount      String
+  ageCategory      PatientAgeCategory
+  age              Int
+  parentsNames     String
+  regularWeekDay   WeekDay?
+  regularTime      String?
+  paymentFrequency PaymentFrequency
+  paymentAmount    Float
+  notes            String            @default("")
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  sessions         Session[]
+  payments         Payment[]
+}
+
+model Session {
+  id        String        @id @default(uuid())
+  patientId String
+  date      DateTime
+  duration  Int
+  notes     String        @default("")
+  status    SessionStatus @default(SCHEDULED)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  patient   Patient       @relation(fields: [patientId], references: [id])
+}
+
+model Payment {
+  id          String          @id @default(uuid())
+  patientId   String
+  amount      Float
+  date        DateTime
+  frequency   PaymentFrequency
+  status      PaymentStatus   @default(PENDING)
+  notes       String          @default("")
+  periodStart DateTime?
+  periodEnd   DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  patient     Patient         @relation(fields: [patientId], references: [id])
+}
+
+model SyncOperation {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  operation  String
+  payload    String
+  timestamp  DateTime @default(now())
+  synced     Boolean  @default(false)
+}

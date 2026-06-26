@@ -1,0 +1,17 @@
+{
+  "name": "consientemente",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "api:dev": "npm run dev -w packages/api-server",
+    "app:dev": "npm run dev -w packages/app",
+    "app:web": "npm run web -w packages/app",
+    "core:build": "npm run build -w packages/core",
+    "desktop:dev": "npm run dev -w desktop",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  }
+}
