@@ -1,12 +1,13 @@
-FROM node:20-alpine
+FROM node:20-slim
+
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY package.json tsconfig.json ./
+COPY package.json tsconfig.base.json ./
 COPY packages/core ./packages/core
 COPY packages/api-server ./packages/api-server
 
-RUN npm install -g npm@latest
 RUN npm install
 
 WORKDIR /app/packages/api-server
