@@ -28,5 +28,16 @@ services:
       postgres:
         condition: service_healthy
 
+  app:
+    build:
+      context: .
+      dockerfile: packages/app/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      EXPO_PUBLIC_API_URL: http://localhost:3001/api
+    depends_on:
+      - api
+
 volumes:
   pgdata:

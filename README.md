@@ -16,35 +16,43 @@
 │   ├── app/             # Mobile/web app (Expo, React Native)
 │   └── api-server/      # Backend API (Express, Prisma)
 ├── desktop/             # Desktop app
-├── docker-compose.yml   # PostgreSQL + API containers
+├── docker-compose.yml   # PostgreSQL + API + App containers
 └── tsconfig.base.json   # Shared TS config
 ```
 
-## Docker (recommended)
+## Docker (no Node.js required)
 
-Start PostgreSQL and the API server:
+Start everything (PostgreSQL, API, and the web app):
 
 ```bash
-npm run docker:up
+docker-compose up -d
 ```
 
-This starts:
-- **PostgreSQL 16** on port `5432`
-- **API server** on port `3001`
+| Service     | URL                          |
+|-------------|------------------------------|
+| Web App     | http://localhost:8081         |
+| API Server  | http://localhost:3001         |
+| PostgreSQL  | localhost:5432                |
 
 Stop with:
 
 ```bash
-npm run docker:down
+docker-compose down
 ```
 
-## Local Development
+Rebuild after changes:
+
+```bash
+docker-compose up -d --build
+```
+
+## Local Development (requires Node.js)
 
 ```bash
 # Start dependencies
 npm run docker:up
 
-# Start API (hot-reload)
+# Start API with hot-reload
 npm run api:dev
 
 # Start Expo app
@@ -63,7 +71,6 @@ npm run core:test
 ## Prisma
 
 ```bash
-npm run api:dev          # Starts API with auto-reload
 npm run prisma:generate  # Regenerate Prisma client
 npm run prisma:migrate   # Run pending migrations
 ```
