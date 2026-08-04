@@ -10,6 +10,9 @@ COPY packages/app ./packages/app
 
 RUN npm install
 
+# Build the shared core package before consuming it
+RUN npm run build -w packages/core
+
 WORKDIR /app/packages/app
 RUN npx expo install --fix
 

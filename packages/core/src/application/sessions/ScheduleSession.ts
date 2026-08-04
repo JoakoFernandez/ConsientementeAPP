@@ -12,7 +12,7 @@ export class ScheduleSession {
       date: input.date,
       duration: input.duration,
       notes: input.notes ?? "",
-      status: SessionStatus.SCHEDULED,
+      status: input.status ?? SessionStatus.WAITING_CONFIRMATION,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -26,4 +26,5 @@ export interface ScheduleSessionInput {
   date: Date;
   duration: number;
   notes?: string;
+  status?: SessionStatus;
 }

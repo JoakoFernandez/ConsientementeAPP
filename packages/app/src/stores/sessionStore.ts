@@ -4,14 +4,16 @@ import {
   ScheduleSession,
   CompleteSession,
   CancelSession,
+  SetSessionStatus,
   GetSessionsByDateRange,
 } from "@consientemente/core";
-import { SqliteSessionRepository } from "../adapters/sqlite/SqliteSessionRepository";
+import { createSessionRepository } from "../adapters/repositoryFactory";
 
-const repo = new SqliteSessionRepository();
+const repo = createSessionRepository();
 const scheduleUseCase = new ScheduleSession(repo);
 const completeUseCase = new CompleteSession(repo);
 const cancelUseCase = new CancelSession(repo);
+const setStatusUseCase = new SetSessionStatus(repo);
 const getByRangeUseCase = new GetSessionsByDateRange(repo);
 
 interface SessionState {
@@ -23,6 +25,8 @@ interface SessionState {
   schedule: (input: Parameters<typeof scheduleUseCase.execute>[0]) => Promise<Session>;
   complete: (id: string) => Promise<void>;
   cancel: (id: string) => Promise<void>;
+  setStatus: (id: string, status: string) => Promise<void>;
+  remove: (id: string) => Promise<void>;
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -59,5 +63,15 @@ export const useSessionStore = create<SessionState>((set) => ({
     set((state) => ({
       sessions: state.sessions.map((s) => (s.id === id ? { ...s, status: "CANCELLED" as any, updatedAt: new Date() } : s)),
     }));
+  },
+  setStatus: async (id: string, status: string) => {
+    await setStatusUseCase.execute(id, status as any);
+    set((state) => ({
+      sessions: state.sessions.map((s) => (s.id === id ? { ...s, status: status as any, updatedAt: new Date() } : s)),
+    }));
+  },
+  remove: async (id: string) => {
+    await repo.delete(id);
+    set((state) => ({ sessions: state.sessions.filter((s) => s.id !== id) }));
   },
 }));

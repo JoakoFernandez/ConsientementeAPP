@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { usePatientStore } from "../../../src/stores/patientStore";
 import { PatientCard } from "../../../src/components/PatientCard";
 import { t } from "../../../src/i18n";
+import { colors, radius, cardShadow } from "../../../src/theme";
 
 export default function PatientsList() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function PatientsList() {
         <TextInput
           style={styles.searchInput}
           placeholder={t("common.search") + "..."}
+          placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -32,7 +34,7 @@ export default function PatientsList() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4A90D9" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
       ) : patients.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>{t("patient.noPatients")}</Text>
@@ -52,17 +54,17 @@ export default function PatientsList() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
-  header: { flexDirection: "row", padding: 12, gap: 8 },
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: "row", padding: radius.md, gap: 8 },
   searchInput: {
-    flex: 1, backgroundColor: "#fff", borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10,
-    fontSize: 14, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    flex: 1, backgroundColor: colors.surface, borderRadius: radius.md, paddingHorizontal: radius.lg, paddingVertical: 10,
+    fontSize: 14, color: colors.text, ...cardShadow,
   },
   addBtn: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: "#4A90D9",
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary,
     justifyContent: "center", alignItems: "center",
   },
-  addBtnText: { fontSize: 24, color: "#fff", fontWeight: "600" },
+  addBtnText: { fontSize: 24, color: colors.white, fontWeight: "600" },
   empty: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { fontSize: 16, color: "#999" },
+  emptyText: { fontSize: 16, color: colors.textMuted },
 });

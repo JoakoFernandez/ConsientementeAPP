@@ -1,7 +1,12 @@
-const CURRENCY = "Gs.";
+import { useSettingsStore } from "../stores/settingsStore";
+import { colors } from "../theme";
+
+export function currencySymbol(): string {
+  return useSettingsStore.getState().currency === "USD" ? "$" : "Gs.";
+}
 
 export function formatCurrency(amount: number): string {
-  return `${CURRENCY} ${amount.toLocaleString("es-PY")}`;
+  return `${currencySymbol()} ${amount.toLocaleString("es-AR")}`;
 }
 
 export function getFrequencyLabel(frequency: string): string {
@@ -14,13 +19,15 @@ export function getFrequencyLabel(frequency: string): string {
 }
 
 export function getStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    PAID: "#27ae60",
-    PENDING: "#f39c12",
-    OVERDUE: "#e74c3c",
-    COMPLETED: "#27ae60",
-    SCHEDULED: "#3498db",
-    CANCELLED: "#95a5a6",
+  const palette: Record<string, string> = {
+    PAID: colors.success,
+    PENDING: colors.warning,
+    OVERDUE: colors.danger,
+    COMPLETED: colors.success,
+    SCHEDULED: colors.info,
+    CANCELLED: colors.textMuted,
+    WAITING_CONFIRMATION: colors.warning,
+    CONFIRMED: colors.success,
   };
-  return colors[status] || "#95a5a6";
+  return palette[status] || colors.textMuted;
 }

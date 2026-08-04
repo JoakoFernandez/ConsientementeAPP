@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ScheduleSession } from "../sessions/ScheduleSession";
 import { CompleteSession } from "../sessions/CompleteSession";
 import { CancelSession } from "../sessions/CancelSession";
+import { SetSessionStatus } from "../sessions/SetSessionStatus";
 import { GetSessionsByDateRange } from "../sessions/GetSessionsByDateRange";
 import { Session } from "../../domain/entities/Session";
 import { SessionRepository } from "../../domain/ports/SessionRepository";
@@ -42,8 +43,22 @@ describe("ScheduleSession", () => {
     expect(session.id).toBeDefined();
     expect(session.patientId).toBe("patient-1");
     expect(session.duration).toBe(50);
-    expect(session.status).toBe(SessionStatus.SCHEDULED);
+    expect(session.status).toBe(SessionStatus.WAITING_CONFIRMATION);
     expect(session.notes).toBe("");
+  });
+
+  it("accepts an explicit status", async () => {
+    const repo = createMockRepo();
+    const useCase = new ScheduleSession(repo);
+
+    const session = await useCase.execute({
+      patientId: "patient-1",
+      date: new Date("2026-07-01T09:00:00"),
+      duration: 50,
+      status: SessionStatus.CONFIRMED,
+    });
+
+    expect(session.status).toBe(SessionStatus.CONFIRMED);
   });
 
   it("creates a session with optional notes", async () => {
@@ -110,6 +125,32 @@ describe("CancelSession", () => {
     const cancel = new CancelSession(repo);
 
     await expect(cancel.execute("nonexistent")).rejects.toThrow("Session not found");
+  });
+});
+
+describe("SetSessionStatus", () => {
+  it("updates the session status", async () => {
+    const repo = createMockRepo();
+    const schedule = new ScheduleSession(repo);
+    const setStatus = new SetSessionStatus(repo);
+
+    const created = await schedule.execute({
+      patientId: "patient-1",
+      date: new Date(),
+      duration: 50,
+    });
+
+    await setStatus.execute(created.id, SessionStatus.CONFIRMED);
+
+    const updated = await repo.findById(created.id);
+    expect(updated!.status).toBe(SessionStatus.CONFIRMED);
+  });
+
+  it("throws when session not found", async () => {
+    const repo = createMockRepo();
+    const setStatus = new SetSessionStatus(repo);
+
+    await expect(setStatus.execute("nonexistent", SessionStatus.CONFIRMED)).rejects.toThrow("Session not found");
   });
 });
 

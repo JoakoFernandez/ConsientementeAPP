@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { getDatabase } from "../adapters/sqlite/database";
 import { api } from "../adapters/ApiClient";
+import { isWeb } from "../adapters/repositoryFactory";
 
 interface SyncState {
   lastSync: Date | null;
@@ -15,6 +16,10 @@ export const useSyncStore = create<SyncState>((set) => ({
   syncNow: async () => {
     set({ syncing: true });
     try {
+      if (isWeb) {
+        set({ lastSync: new Date(), syncing: false });
+        return;
+      }
       const db = await getDatabase();
       const pendingOps: any[] = await db.getAllAsync(
         "SELECT * FROM sync_queue WHERE synced = 0 ORDER BY timestamp ASC"
@@ -31,6 +36,7 @@ export const useSyncStore = create<SyncState>((set) => ({
     }
   },
   getStatus: async () => {
+    if (isWeb) return;
     const db = await getDatabase();
     const row: any = await db.getFirstAsync(
       "SELECT MAX(timestamp) as lastSync FROM sync_queue WHERE synced = 1"

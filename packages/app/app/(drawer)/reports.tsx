@@ -2,12 +2,14 @@ import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Share, Platform } from "react-native";
 import { usePaymentStore } from "../../src/stores/paymentStore";
 import { usePatientStore } from "../../src/stores/patientStore";
-import { formatCurrency, getStatusColor } from "../../src/utils/formatters";
+import { formatCurrency } from "../../src/utils/formatters";
 import { formatDate } from "../../src/utils/date";
 import { ExportToCSV } from "@consientemente/core";
-import { SqlitePaymentRepository } from "../../src/adapters/sqlite/SqlitePaymentRepository";
+import { createPaymentRepository } from "../../src/adapters/repositoryFactory";
+import { t } from "../../src/i18n";
+import { colors, radius, cardShadow } from "../../src/theme";
 
-const csvExporter = new ExportToCSV(new SqlitePaymentRepository());
+const csvExporter = new ExportToCSV(createPaymentRepository());
 
 export default function Reports() {
   const { payments, loading, loadByRange } = usePaymentStore();
@@ -38,7 +40,7 @@ export default function Reports() {
   const paidAmount = payments.filter((p) => p.status === "PAID").reduce((s, p) => s + p.amount, 0);
 
   function getPatientName(id: string) {
-    return patients.find((p) => p.id === id)?.name ?? "Desconocido";
+    return patients.find((p) => p.id === id)?.name ?? t("common.unknown");
   }
 
   async function handleExport() {
@@ -60,31 +62,31 @@ export default function Reports() {
       <View style={styles.periodRow}>
         {(["weekly", "monthly"] as const).map((p) => (
           <TouchableOpacity key={p} style={[styles.periodBtn, period === p && styles.active]} onPress={() => setPeriod(p)}>
-            <Text style={[styles.periodText, period === p && styles.activeText]}>{p === "weekly" ? "Semanal" : "Mensual"}</Text>
+            <Text style={[styles.periodText, period === p && styles.activeText]}>{p === "weekly" ? t("patient.weekly") : t("patient.monthly")}</Text>
           </TouchableOpacity>
         ))}
         <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
-          <Text style={styles.exportText}>Exportar CSV</Text>
+          <Text style={styles.exportText}>{t("reports.exportCSV")}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryNum}>{payments.length}</Text>
-          <Text style={styles.summaryLabel}>Total Pagos</Text>
+          <Text style={styles.summaryLabel}>{t("reports.totalPayments")}</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryNum}>{formatCurrency(paidAmount)}</Text>
-          <Text style={styles.summaryLabel}>Cobrado</Text>
+          <Text style={styles.summaryLabel}>{t("payment.collected")}</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={[styles.summaryNum, { color: "#e74c3c" }]}>{formatCurrency(totalAmount - paidAmount)}</Text>
-          <Text style={styles.summaryLabel}>Pendiente</Text>
+          <Text style={[styles.summaryNum, { color: colors.danger }]}>{formatCurrency(totalAmount - paidAmount)}</Text>
+          <Text style={styles.summaryLabel}>{t("payment.pending")}</Text>
         </View>
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4A90D9" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
       ) : (
         <FlatList
           data={payments}
@@ -95,12 +97,12 @@ export default function Reports() {
                 <Text style={styles.patientName}>{getPatientName(item.patientId)}</Text>
                 <Text style={styles.paymentDate}>{formatDate(new Date(item.date))}</Text>
               </View>
-              <Text style={[styles.amount, { color: item.status === "PAID" ? "#27ae60" : "#e74c3c" }]}>
+              <Text style={[styles.amount, { color: item.status === "PAID" ? colors.success : colors.danger }]}>
                 {formatCurrency(item.amount)}
               </Text>
             </View>
           )}
-          contentContainerStyle={{ padding: 12 }}
+          contentContainerStyle={{ padding: radius.md }}
         />
       )}
     </View>
@@ -108,23 +110,23 @@ export default function Reports() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
-  periodRow: { flexDirection: "row", padding: 12, gap: 8 },
-  periodBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: "#fff" },
-  active: { backgroundColor: "#4A90D9" },
-  periodText: { fontSize: 13, fontWeight: "600", color: "#666" },
-  activeText: { color: "#fff" },
-  exportBtn: { marginLeft: "auto", backgroundColor: "#27ae60", borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
-  exportText: { color: "#fff", fontWeight: "600", fontSize: 13 },
-  summaryRow: { flexDirection: "row", paddingHorizontal: 12, gap: 8, marginBottom: 8 },
-  summaryCard: { flex: 1, backgroundColor: "#fff", borderRadius: 10, padding: 12, alignItems: "center" },
-  summaryNum: { fontSize: 16, fontWeight: "700", color: "#333" },
-  summaryLabel: { fontSize: 11, color: "#888", marginTop: 2 },
+  container: { flex: 1, backgroundColor: colors.background },
+  periodRow: { flexDirection: "row", padding: radius.md, gap: 8 },
+  periodBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.sm, backgroundColor: colors.surface, ...cardShadow },
+  active: { backgroundColor: colors.primary },
+  periodText: { fontSize: 13, fontWeight: "600", color: colors.textSecondary },
+  activeText: { color: colors.white },
+  exportBtn: { marginLeft: "auto", backgroundColor: colors.success, borderRadius: radius.sm, paddingHorizontal: 14, paddingVertical: 8 },
+  exportText: { color: colors.white, fontWeight: "600", fontSize: 13 },
+  summaryRow: { flexDirection: "row", paddingHorizontal: radius.md, gap: 8, marginBottom: 8 },
+  summaryCard: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.md, padding: radius.md, alignItems: "center", ...cardShadow },
+  summaryNum: { fontSize: 16, fontWeight: "700", color: colors.text },
+  summaryLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
   paymentRow: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    backgroundColor: "#fff", borderRadius: 8, padding: 14, marginBottom: 6,
+    backgroundColor: colors.surface, borderRadius: radius.sm, padding: 14, marginBottom: 6, ...cardShadow,
   },
-  patientName: { fontSize: 14, fontWeight: "600", color: "#333" },
-  paymentDate: { fontSize: 12, color: "#888", marginTop: 2 },
+  patientName: { fontSize: 14, fontWeight: "600", color: colors.text },
+  paymentDate: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   amount: { fontSize: 16, fontWeight: "700" },
 });

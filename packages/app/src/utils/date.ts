@@ -1,3 +1,17 @@
+import { getLanguage } from "../i18n";
+
+export function getLocale(): string {
+  const l = getLanguage();
+  return l === "it" ? "it-IT" : l === "en" ? "en-US" : "es-AR";
+}
+
+export function getMonthNames(): string[] {
+  const names = Array.from({ length: 12 }, (_, i) =>
+    new Intl.DateTimeFormat(getLocale(), { month: "long" }).format(new Date(2000, i, 1))
+  );
+  return names.map((n) => n.charAt(0).toUpperCase() + n.slice(1));
+}
+
 export function getMonthDays(year: number, month: number): Date[] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -33,11 +47,11 @@ export function isSameMonth(date: Date, month: Date): boolean {
 }
 
 export function formatDate(date: Date): string {
-  return date.toLocaleDateString("es-PY", { year: "numeric", month: "long", day: "numeric" });
+  return date.toLocaleDateString(getLocale(), { year: "numeric", month: "long", day: "numeric" });
 }
 
 export function formatTime(date: Date): string {
-  return date.toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" });
 }
 
 export function getWeekRange(date: Date): { from: Date; to: Date } {

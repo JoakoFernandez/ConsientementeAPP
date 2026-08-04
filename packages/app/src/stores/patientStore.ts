@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { Patient } from "@consientemente/core";
 import { RegisterPatient, UpdatePatient, DeletePatient, GetPatient, ListPatients } from "@consientemente/core";
-import { SqlitePatientRepository } from "../adapters/sqlite/SqlitePatientRepository";
+import { createPatientRepository } from "../adapters/repositoryFactory";
 
-const repo = new SqlitePatientRepository();
+const repo = createPatientRepository();
 const registerUseCase = new RegisterPatient(repo);
 const updateUseCase = new UpdatePatient(repo);
 const deleteUseCase = new DeletePatient(repo);

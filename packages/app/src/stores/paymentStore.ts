@@ -6,9 +6,9 @@ import {
   GetPaymentsByDateRange,
   GetPatientPayments,
 } from "@consientemente/core";
-import { SqlitePaymentRepository } from "../adapters/sqlite/SqlitePaymentRepository";
+import { createPaymentRepository } from "../adapters/repositoryFactory";
 
-const repo = new SqlitePaymentRepository();
+const repo = createPaymentRepository();
 const registerUseCase = new RegisterPayment(repo);
 const markPaidUseCase = new MarkPaymentAsPaid(repo);
 

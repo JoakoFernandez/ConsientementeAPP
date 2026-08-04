@@ -39,6 +39,12 @@ describe("SessionStatus", () => {
   it("has CANCELLED value", () => {
     expect(SessionStatus.CANCELLED).toBe("CANCELLED");
   });
+  it("has WAITING_CONFIRMATION value", () => {
+    expect(SessionStatus.WAITING_CONFIRMATION).toBe("WAITING_CONFIRMATION");
+  });
+  it("has CONFIRMED value", () => {
+    expect(SessionStatus.CONFIRMED).toBe("CONFIRMED");
+  });
 });
 
 describe("PaymentStatus", () => {

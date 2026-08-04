@@ -1,21 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { SessionStatus, Patient } from "@consientemente/core";
 import { useCalendarStore } from "../../src/stores/calendarStore";
 import { useSessionStore } from "../../src/stores/sessionStore";
 import { usePatientStore } from "../../src/stores/patientStore";
 import { CalendarGrid } from "../../src/components/CalendarGrid";
 import { DateDetailPanel } from "../../src/components/DateDetailPanel";
 import { t } from "../../src/i18n";
+import { getMonthNames } from "../../src/utils/date";
+import { getHolidaysForRange, getHoliday } from "../../src/utils/holidays";
+import { colors, radius } from "../../src/theme";
+
+const DEFAULT_DURATION = 50;
 
 export default function Calendar() {
-  const { selectedDate, currentMonth, setSelectedDate, goToPrevMonth, goToNextMonth, goToToday } = useCalendarStore();
-  const { sessions, loadByRange: loadSessions } = useSessionStore();
+  const { selectedDate, currentMonth, setSelectedDate, setCurrentMonth, goToPrevMonth, goToNextMonth, goToToday } = useCalendarStore();
+  const { sessions, loadByRange: loadSessions, schedule, setStatus, remove } = useSessionStore();
   const { patients, load: loadPatients } = usePatientStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadMonthData();
   }, [currentMonth]);
+
+  useEffect(() => {
+    if (selectedDate.getMonth() === currentMonth.getMonth() && selectedDate.getFullYear() === currentMonth.getFullYear()) return;
+    setCurrentMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+  }, [selectedDate]);
 
   async function loadMonthData() {
     setLoading(true);
@@ -26,27 +37,67 @@ export default function Calendar() {
   }
 
   const monthSessionDates = sessions.map((s) => new Date(s.date).toISOString().split("T")[0]);
+  const holidays = getHolidaysForRange(
+    new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1),
+    new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
+  );
+  const selectedHoliday = getHoliday(selectedDate);
+
   const selectedDateSessions = sessions.filter((s) => {
     const d = new Date(s.date);
     return d.toDateString() === selectedDate.toDateString();
   });
 
-  const monthNames = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Setiembre","Octubre","Noviembre","Diciembre"];
+  async function addPatient(patient: Patient) {
+    const confirm = (confirmed: boolean) => {
+      const date = new Date(selectedDate);
+      const time = patient.regularSchedule
+        ? patient.regularSchedule.time
+        : `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
+      const [h, m] = time.split(":").map((n) => parseInt(n, 10));
+      date.setHours(h || 9, m || 0, 0, 0);
+      schedule({
+        patientId: patient.id,
+        date,
+        duration: DEFAULT_DURATION,
+        status: confirmed ? SessionStatus.CONFIRMED : SessionStatus.WAITING_CONFIRMATION,
+      });
+    };
+
+    if (selectedHoliday) {
+      Alert.alert(
+        t("calendar.holiday"),
+        t("calendar.holidayWarning", { name: selectedHoliday.name }),
+        [
+          { text: t("calendar.cancelHolidayAdd"), style: "cancel" },
+          { text: t("calendar.confirmHolidayAdd"), onPress: () => confirm(false) },
+        ]
+      );
+    } else {
+      confirm(false);
+    }
+  }
+
+  const monthNames = getMonthNames();
 
   return (
     <View style={styles.container}>
       <View style={styles.monthNav}>
-        <TouchableOpacity onPress={goToPrevMonth}><Text style={styles.navBtn}>{"<"}</Text></TouchableOpacity>
-        <TouchableOpacity onPress={goToToday}>
+        <TouchableOpacity onPress={goToPrevMonth} style={styles.navTouch}>
+          <Text style={styles.navBtn}>{"<"}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={goToToday} style={styles.monthTouch}>
           <Text style={styles.monthTitle}>
             {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={goToNextMonth}><Text style={styles.navBtn}>{">"}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={goToNextMonth} style={styles.navTouch}>
+          <Text style={styles.navBtn}>{">"}</Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4A90D9" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
       ) : (
         <>
           <CalendarGrid
@@ -54,12 +105,17 @@ export default function Calendar() {
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
             sessionDates={monthSessionDates}
+            holidays={holidays}
           />
           <ScrollView style={styles.detailScroll}>
             <DateDetailPanel
               date={selectedDate}
               sessions={selectedDateSessions}
               patients={patients}
+              holiday={selectedHoliday?.name ?? null}
+              onAddPatient={addPatient}
+              onRemovePatient={(s) => remove(s.id)}
+              onToggleStatus={(s, status) => setStatus(s.id, status)}
             />
           </ScrollView>
         </>
@@ -69,12 +125,14 @@ export default function Calendar() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: colors.background },
   monthNav: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    paddingHorizontal: 20, paddingVertical: 12, backgroundColor: "#f5f5f5",
+    paddingHorizontal: 20, paddingVertical: radius.md, backgroundColor: colors.surfaceMuted,
   },
-  navBtn: { fontSize: 24, fontWeight: "700", color: "#4A90D9", paddingHorizontal: 10 },
-  monthTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
+  navTouch: { paddingHorizontal: 6 },
+  navBtn: { fontSize: 24, fontWeight: "700", color: colors.primary, paddingHorizontal: 10 },
+  monthTouch: { paddingVertical: 4 },
+  monthTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
   detailScroll: { flex: 1 },
 });

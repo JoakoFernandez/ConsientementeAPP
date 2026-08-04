@@ -67,5 +67,13 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void
       timestamp TEXT NOT NULL,
       synced INTEGER DEFAULT 0
     );
+
+    CREATE TABLE IF NOT EXISTS clinic_profile (
+      id TEXT PRIMARY KEY,
+      clinicName TEXT NOT NULL,
+      psychologistName TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
   `);
 }

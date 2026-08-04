@@ -3,8 +3,10 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Activity
 import { usePaymentStore } from "../../../src/stores/paymentStore";
 import { usePatientStore } from "../../../src/stores/patientStore";
 import { PaymentFrequency } from "@consientemente/core";
-import { formatCurrency, getStatusColor } from "../../../src/utils/formatters";
+import { formatCurrency, getStatusColor, currencySymbol } from "../../../src/utils/formatters";
 import { formatDate } from "../../../src/utils/date";
+import { t } from "../../../src/i18n";
+import { colors, radius, cardShadow } from "../../../src/theme";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -41,7 +43,7 @@ export default function Payments() {
   }
 
   function getPatientName(id: string) {
-    return patients.find((p) => p.id === id)?.name ?? "Desconocido";
+    return patients.find((p) => p.id === id)?.name ?? t("common.unknown");
   }
 
   const totalPaid = payments.filter((p) => p.status === "PAID").reduce((s, p) => s + p.amount, 0);
@@ -53,7 +55,7 @@ export default function Payments() {
 
   async function handleNewPayment() {
     if (!newPatientId || !newAmount) {
-      Alert.alert("Error", "Seleccione paciente e ingrese monto");
+      Alert.alert(t("common.error"), t("payment.selectPatientAmount"));
       return;
     }
     await register({
@@ -77,7 +79,7 @@ export default function Payments() {
             onPress={() => setPeriod(p)}
           >
             <Text style={[styles.periodText, period === p && styles.periodTextActive]}>
-              {p === "daily" ? "Hoy" : p === "weekly" ? "Semana" : "Mes"}
+              {p === "daily" ? t("calendar.today") : p === "weekly" ? t("calendar.week") : t("calendar.month")}
             </Text>
           </TouchableOpacity>
         ))}
@@ -87,13 +89,13 @@ export default function Payments() {
       </View>
 
       <View style={styles.summaryRow}>
-        <View style={styles.summaryCard}><Text style={styles.summaryAmt}>{formatCurrency(totalPaid)}</Text><Text style={styles.summaryLabel}>Cobrado</Text></View>
-        <View style={styles.summaryCard}><Text style={[styles.summaryAmt, { color: "#e74c3c" }]}>{formatCurrency(totalPending)}</Text><Text style={styles.summaryLabel}>Pendiente</Text></View>
+        <View style={styles.summaryCard}><Text style={styles.summaryAmt}>{formatCurrency(totalPaid)}</Text><Text style={styles.summaryLabel}>{t("payment.collected")}</Text></View>
+        <View style={styles.summaryCard}><Text style={[styles.summaryAmt, { color: colors.danger }]}>{formatCurrency(totalPending)}</Text><Text style={styles.summaryLabel}>{t("payment.pending")}</Text></View>
       </View>
 
       {showNewForm && (
         <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Registrar Pago</Text>
+          <Text style={styles.formTitle}>{t("payment.new")}</Text>
           <FlatList
             data={patients}
             horizontal
@@ -116,33 +118,34 @@ export default function Payments() {
                 onPress={() => setNewFrequency(f)}
               >
                 <Text style={[styles.chipText, newFrequency === f && styles.chipTextActive]}>
-                  {f === PaymentFrequency.PER_SESSION ? "Sesión" : f === PaymentFrequency.WEEKLY ? "Semanal" : "Mensual"}
+                  {f === PaymentFrequency.PER_SESSION ? t("patient.perSession") : f === PaymentFrequency.WEEKLY ? t("patient.weekly") : t("patient.monthly")}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
           <View style={styles.amountRow}>
-            <Text style={styles.currencyLabel}>Gs.</Text>
+            <Text style={styles.currencyLabel}>{currencySymbol()}</Text>
             <View style={{ flex: 1, marginLeft: 8 }}>
               <TextInput
                 style={styles.amountInput}
                 placeholder="0"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="numeric"
                 value={newAmount}
                 onChangeText={setNewAmount}
               />
             </View>
             <TouchableOpacity style={styles.submitPaymentBtn} onPress={handleNewPayment}>
-              <Text style={styles.submitPaymentText}>Pagar</Text>
+              <Text style={styles.submitPaymentText}>{t("payment.pay")}</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4A90D9" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
       ) : payments.length === 0 ? (
-        <Text style={styles.emptyText}>No hay pagos en este período</Text>
+        <Text style={styles.emptyText}>{t("payment.noPayments")}</Text>
       ) : (
         <FlatList
           data={payments}
@@ -152,19 +155,19 @@ export default function Payments() {
               <View style={styles.paymentHeader}>
                 <Text style={styles.patientName}>{getPatientName(item.patientId)}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-                  <Text style={styles.statusText}>{item.status === "PAID" ? "Pagado" : item.status === "PENDING" ? "Pendiente" : "Vencido"}</Text>
+                  <Text style={styles.statusText}>{item.status === "PAID" ? t("payment.paid") : item.status === "PENDING" ? t("payment.pending") : t("payment.overdue")}</Text>
                 </View>
               </View>
               <Text style={styles.paymentAmount}>{formatCurrency(item.amount)}</Text>
               <Text style={styles.paymentDate}>{formatDate(new Date(item.date))}</Text>
               {item.status === "PENDING" && (
                 <TouchableOpacity style={styles.payBtn} onPress={() => handleMarkPaid(item.id)}>
-                  <Text style={styles.payBtnText}>Marcar como Pagado</Text>
+                  <Text style={styles.payBtnText}>{t("payment.markPaid")}</Text>
                 </TouchableOpacity>
               )}
             </View>
           )}
-          contentContainerStyle={{ padding: 12 }}
+          contentContainerStyle={{ padding: radius.md }}
         />
       )}
     </View>
@@ -172,39 +175,39 @@ export default function Payments() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
-  periodRow: { flexDirection: "row", padding: 12, gap: 8 },
-  periodBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: "#fff" },
-  periodActive: { backgroundColor: "#4A90D9" },
-  periodText: { fontSize: 13, fontWeight: "600", color: "#666" },
-  periodTextActive: { color: "#fff" },
-  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#27ae60", justifyContent: "center", alignItems: "center", marginLeft: "auto" },
-  addBtnText: { fontSize: 20, color: "#fff", fontWeight: "700" },
-  summaryRow: { flexDirection: "row", paddingHorizontal: 12, gap: 8, marginBottom: 8 },
-  summaryCard: { flex: 1, backgroundColor: "#fff", borderRadius: 10, padding: 12, alignItems: "center" },
-  summaryAmt: { fontSize: 18, fontWeight: "700", color: "#27ae60" },
-  summaryLabel: { fontSize: 11, color: "#888", marginTop: 2 },
-  formCard: { backgroundColor: "#fff", margin: 12, borderRadius: 12, padding: 16 },
-  formTitle: { fontSize: 16, fontWeight: "700", marginBottom: 12 },
-  patientChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: "#f0f0f0", marginRight: 6 },
-  chipActive: { backgroundColor: "#4A90D9" },
-  chipText: { fontSize: 12, color: "#666" },
-  chipTextActive: { color: "#fff" },
-  freqRow: { flexDirection: "row", gap: 6, marginBottom: 12 },
-  freqChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: "#f0f0f0" },
+  container: { flex: 1, backgroundColor: colors.background },
+  periodRow: { flexDirection: "row", padding: radius.md, gap: 8 },
+  periodBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.sm, backgroundColor: colors.surface, ...cardShadow },
+  periodActive: { backgroundColor: colors.primary },
+  periodText: { fontSize: 13, fontWeight: "600", color: colors.textSecondary },
+  periodTextActive: { color: colors.white },
+  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.success, justifyContent: "center", alignItems: "center", marginLeft: "auto" },
+  addBtnText: { fontSize: 20, color: colors.white, fontWeight: "700" },
+  summaryRow: { flexDirection: "row", paddingHorizontal: radius.md, gap: 8, marginBottom: 8 },
+  summaryCard: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.md, padding: radius.md, alignItems: "center", ...cardShadow },
+  summaryAmt: { fontSize: 18, fontWeight: "700", color: colors.success },
+  summaryLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
+  formCard: { backgroundColor: colors.surface, margin: radius.md, borderRadius: radius.md, padding: radius.lg, ...cardShadow },
+  formTitle: { fontSize: 16, fontWeight: "700", marginBottom: radius.md, color: colors.text },
+  patientChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: colors.surfaceMuted, marginRight: 6 },
+  chipActive: { backgroundColor: colors.primary },
+  chipText: { fontSize: 12, color: colors.textSecondary },
+  chipTextActive: { color: colors.white },
+  freqRow: { flexDirection: "row", gap: 6, marginBottom: radius.md },
+  freqChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: colors.surfaceMuted },
   amountRow: { flexDirection: "row", alignItems: "center" },
-  currencyLabel: { fontSize: 18, fontWeight: "700", color: "#333" },
-  amountInput: { backgroundColor: "#f9f9f9", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16, borderWidth: 1, borderColor: "#e0e0e0" },
-  submitPaymentBtn: { backgroundColor: "#27ae60", borderRadius: 8, paddingHorizontal: 20, paddingVertical: 10, marginLeft: 8 },
-  submitPaymentText: { color: "#fff", fontWeight: "700" },
-  emptyText: { textAlign: "center", color: "#999", marginTop: 40, fontSize: 15 },
-  paymentCard: { backgroundColor: "#fff", borderRadius: 10, padding: 14, marginBottom: 8, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  currencyLabel: { fontSize: 18, fontWeight: "700", color: colors.text },
+  amountInput: { backgroundColor: colors.surfaceSoft, borderRadius: radius.sm, paddingHorizontal: radius.md, paddingVertical: 8, fontSize: 16, borderWidth: 1, borderColor: colors.border, color: colors.text },
+  submitPaymentBtn: { backgroundColor: colors.success, borderRadius: radius.sm, paddingHorizontal: 20, paddingVertical: 10, marginLeft: 8 },
+  submitPaymentText: { color: colors.white, fontWeight: "700" },
+  emptyText: { textAlign: "center", color: colors.textMuted, marginTop: 40, fontSize: 15 },
+  paymentCard: { backgroundColor: colors.surface, borderRadius: radius.md, padding: 14, marginBottom: 8, ...cardShadow },
   paymentHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  patientName: { fontWeight: "600", fontSize: 15, color: "#333" },
+  patientName: { fontWeight: "600", fontSize: 15, color: colors.text },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6 },
-  statusText: { color: "#fff", fontSize: 11, fontWeight: "600" },
-  paymentAmount: { fontSize: 20, fontWeight: "700", color: "#333", marginTop: 4 },
-  paymentDate: { fontSize: 12, color: "#888", marginTop: 2 },
-  payBtn: { marginTop: 8, backgroundColor: "#27ae60", borderRadius: 6, paddingVertical: 8, alignItems: "center" },
-  payBtnText: { color: "#fff", fontWeight: "600", fontSize: 13 },
+  statusText: { color: colors.white, fontSize: 11, fontWeight: "600" },
+  paymentAmount: { fontSize: 20, fontWeight: "700", color: colors.text, marginTop: 4 },
+  paymentDate: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  payBtn: { marginTop: 8, backgroundColor: colors.success, borderRadius: 6, paddingVertical: 8, alignItems: "center" },
+  payBtnText: { color: colors.white, fontWeight: "600", fontSize: 13 },
 });

@@ -1,63 +1,238 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { Session, Patient } from "@consientemente/core";
+import React, { useMemo, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Session, Patient, SessionStatus } from "@consientemente/core";
 import { formatTime, formatDate } from "../utils/date";
-import { getStatusColor } from "../utils/formatters";
+import { getWeekDay } from "../utils/holidays";
+import { t } from "../i18n";
+import { colors, radius, cardShadow } from "../theme";
 
-interface DateDetailPanelProps {
+interface DayPlanPanelProps {
   date: Date;
   sessions: Session[];
   patients: Patient[];
-  onSessionPress?: (session: Session) => void;
+  holiday?: string | null;
+  onAddPatient: (patient: Patient) => void;
+  onRemovePatient: (session: Session) => void;
+  onToggleStatus: (session: Session, status: SessionStatus) => void;
 }
 
-export function DateDetailPanel({ date, sessions, patients, onSessionPress }: DateDetailPanelProps) {
+export function DateDetailPanel({
+  date,
+  sessions,
+  patients,
+  holiday,
+  onAddPatient,
+  onRemovePatient,
+  onToggleStatus,
+}: DayPlanPanelProps) {
+  const [showAddList, setShowAddList] = useState(false);
+
+  const addedIds = useMemo(() => new Set(sessions.map((s) => s.patientId)), [sessions]);
+  const dayWeekDay = getWeekDay(date);
+
+  const regularPatients = useMemo(
+    () =>
+      patients.filter(
+        (p) =>
+          p.isActive &&
+          p.regularSchedule &&
+          p.regularSchedule.weekDay === dayWeekDay &&
+          !addedIds.has(p.id)
+      ),
+    [patients, addedIds, dayWeekDay]
+  );
+
+  const regularIds = useMemo(() => new Set(regularPatients.map((p) => p.id)), [regularPatients]);
+
+  const otherPatients = useMemo(
+    () => patients.filter((p) => p.isActive && !addedIds.has(p.id) && !regularIds.has(p.id)),
+    [patients, addedIds, regularIds]
+  );
+
   const getPatientName = (patientId: string) =>
-    patients.find((p) => p.id === patientId)?.name ?? "Unknown";
+    patients.find((p) => p.id === patientId)?.name ?? t("common.unknown");
+
+  const renderStatusChips = (session: Session) => (
+    <View style={styles.chipRow}>
+      <TouchableOpacity
+        style={[styles.chip, session.status === SessionStatus.WAITING_CONFIRMATION && styles.chipActiveWaiting]}
+        onPress={() =>
+          session.status !== SessionStatus.WAITING_CONFIRMATION &&
+          onToggleStatus(session, SessionStatus.WAITING_CONFIRMATION)
+        }
+      >
+        <Text
+          style={[
+            styles.chipText,
+            session.status === SessionStatus.WAITING_CONFIRMATION && styles.chipTextActive,
+          ]}
+        >
+          {t("calendar.waiting")}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.chip, session.status === SessionStatus.CONFIRMED && styles.chipActiveConfirmed]}
+        onPress={() =>
+          session.status !== SessionStatus.CONFIRMED && onToggleStatus(session, SessionStatus.CONFIRMED)
+        }
+      >
+        <Text
+          style={[styles.chipText, session.status === SessionStatus.CONFIRMED && styles.chipTextActive]}
+        >
+          {t("calendar.confirmed")}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
       <Text style={styles.dateTitle}>{formatDate(date)}</Text>
-      <Text style={styles.sectionTitle}>Sesiones ({sessions.length})</Text>
+      {holiday ? (
+        <View style={styles.holidayBadge}>
+          <Text style={styles.holidayBadgeText}>
+            {t("calendar.holiday")}: {holiday}
+          </Text>
+        </View>
+      ) : null}
+
+      <Text style={styles.sectionTitle}>{t("calendar.patientsOfDay")} ({sessions.length})</Text>
       {sessions.length === 0 ? (
-        <Text style={styles.emptyText}>No hay sesiones</Text>
+        <Text style={styles.emptyText}>{t("calendar.noPatientsOfDay")}</Text>
       ) : (
         sessions.map((s) => (
           <View key={s.id} style={styles.sessionCard}>
             <View style={styles.sessionHeader}>
-              <Text style={styles.patientName}>{getPatientName(s.patientId)}</Text>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(s.status) }]}>
-                <Text style={styles.statusText}>{s.status}</Text>
+              <View style={styles.sessionInfo}>
+                <Text style={styles.patientName}>{getPatientName(s.patientId)}</Text>
+                <Text style={styles.sessionTime}>
+                  {formatTime(new Date(s.date))} · {s.duration}min
+                </Text>
               </View>
+              <TouchableOpacity onPress={() => onRemovePatient(s)} style={styles.removeBtn}>
+                <Text style={styles.removeText}>{t("calendar.removePatient")}</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.sessionTime}>{formatTime(s.date)} · {s.duration}min</Text>
-            {s.notes ? <Text style={styles.notes}>{s.notes}</Text> : null}
+            {renderStatusChips(s)}
           </View>
         ))
       )}
+
+      <Text style={styles.sectionTitle}>{t("calendar.regularSchedule")}</Text>
+      {regularPatients.length === 0 ? (
+        <Text style={styles.emptyText}>{t("calendar.noRegularSchedule")}</Text>
+      ) : (
+        regularPatients.map((p) => (
+          <View key={p.id} style={styles.suggestCard}>
+            <View style={styles.suggestInfo}>
+              <Text style={styles.patientName}>{p.name}</Text>
+              <Text style={styles.sessionTime}>
+                {t("patient.regularSchedule")}: {formatTime(dateFromTime(date, p.regularSchedule!.time))}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.addBtn} onPress={() => onAddPatient(p)}>
+              <Text style={styles.addBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        ))
+      )}
+
+      <TouchableOpacity style={styles.addPatientBtn} onPress={() => setShowAddList((v) => !v)}>
+        <Text style={styles.addPatientText}>{t("calendar.addPatient")}</Text>
+      </TouchableOpacity>
+
+      {showAddList && otherPatients.length === 0 && (
+        <Text style={styles.emptyText}>{t("calendar.noPatientsOfDay")}</Text>
+      )}
+      {showAddList &&
+        otherPatients.map((p) => (
+          <View key={p.id} style={styles.suggestCard}>
+            <View style={styles.suggestInfo}>
+              <Text style={styles.patientName}>{p.name}</Text>
+              <Text style={styles.sessionTime}>{formatTime(dateFromTime(date, p.regularSchedule?.time ?? "09:00"))}</Text>
+            </View>
+            <TouchableOpacity style={styles.addBtn} onPress={() => onAddPatient(p)}>
+              <Text style={styles.addBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
     </View>
   );
 }
 
+function dateFromTime(date: Date, time: string): Date {
+  const [h, m] = time.split(":").map((n) => parseInt(n, 10));
+  const d = new Date(date);
+  d.setHours(h || 9, m || 0, 0, 0);
+  return d;
+}
+
 const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: "#f9f9f9", borderRadius: 12, margin: 8 },
-  dateTitle: { fontSize: 18, fontWeight: "700", marginBottom: 12, color: "#333" },
-  sectionTitle: { fontSize: 14, fontWeight: "600", color: "#666", marginBottom: 8 },
-  emptyText: { color: "#999", fontStyle: "italic" },
+  container: { padding: radius.lg, backgroundColor: colors.surfaceMuted, borderRadius: radius.md, margin: 8 },
+  dateTitle: { fontSize: 18, fontWeight: "700", marginBottom: radius.md, color: colors.text },
+  holidayBadge: {
+    backgroundColor: colors.dangerLight,
+    borderRadius: radius.sm,
+    paddingHorizontal: radius.md,
+    paddingVertical: 6,
+    marginBottom: radius.md,
+    alignSelf: "flex-start",
+  },
+  holidayBadgeText: { color: colors.dangerText, fontSize: 13, fontWeight: "600" },
+  sectionTitle: { fontSize: 14, fontWeight: "600", color: colors.textSecondary, marginBottom: 8, marginTop: 8 },
+  emptyText: { color: colors.textMuted, fontStyle: "italic", marginBottom: 8 },
   sessionCard: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    padding: radius.md,
     marginBottom: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...cardShadow,
   },
   sessionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  patientName: { fontWeight: "600", fontSize: 15, color: "#333" },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
-  statusText: { color: "#fff", fontSize: 11, fontWeight: "600" },
-  sessionTime: { fontSize: 13, color: "#888", marginTop: 4 },
-  notes: { fontSize: 12, color: "#666", marginTop: 4, fontStyle: "italic" },
+  sessionInfo: { flex: 1 },
+  patientName: { fontWeight: "600", fontSize: 15, color: colors.text },
+  sessionTime: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  removeBtn: { paddingHorizontal: 8, paddingVertical: 4 },
+  removeText: { color: colors.danger, fontSize: 12, fontWeight: "600" },
+  chipRow: { flexDirection: "row", gap: 8, marginTop: 10 },
+  chip: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignItems: "center",
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chipActiveWaiting: { backgroundColor: colors.warningLight, borderColor: colors.warning },
+  chipActiveConfirmed: { backgroundColor: colors.successLight, borderColor: colors.success },
+  chipText: { fontSize: 12, fontWeight: "600", color: colors.textSecondary },
+  chipTextActive: { color: colors.text },
+  suggestCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    padding: radius.md,
+    marginBottom: 6,
+  },
+  suggestInfo: { flex: 1 },
+  addBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addBtnText: { color: colors.white, fontSize: 20, fontWeight: "700", lineHeight: 22 },
+  addPatientBtn: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.sm,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  addPatientText: { color: colors.primaryDark, fontSize: 14, fontWeight: "700" },
 });
