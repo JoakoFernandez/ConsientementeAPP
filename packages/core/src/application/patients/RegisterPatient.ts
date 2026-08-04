@@ -15,7 +15,7 @@ export class RegisterPatient {
       ageCategory: input.ageCategory,
       age: input.age,
       parentsNames: input.parentsNames,
-      regularSchedule: input.regularSchedule ?? null,
+      regularSchedules: input.regularSchedules ?? [],
       paymentFrequency: input.paymentFrequency,
       paymentAmount: input.paymentAmount,
       notes: input.notes,
@@ -35,7 +35,7 @@ export interface RegisterPatientInput {
   ageCategory: PatientAgeCategory;
   age: number;
   parentsNames: string;
-  regularSchedule: RegularSchedule | null;
+  regularSchedules: RegularSchedule[];
   paymentFrequency: PaymentFrequency;
   paymentAmount: number;
   notes: string;

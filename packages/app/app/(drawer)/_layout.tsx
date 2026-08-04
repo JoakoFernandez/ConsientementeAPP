@@ -19,6 +19,9 @@ export default function DrawerLayout() {
       <Drawer.Screen name="dashboard" options={{ title: t("nav.dashboard"), drawerLabel: t("nav.dashboard") }} />
       <Drawer.Screen name="calendar" options={{ title: t("nav.calendar"), drawerLabel: t("nav.calendar") }} />
       <Drawer.Screen name="patients/index" options={{ title: t("nav.patients"), drawerLabel: t("nav.patients") }} />
+      <Drawer.Screen name="patients/new" options={{ drawerItemStyle: { display: "none" } }} />
+      <Drawer.Screen name="patients/edit" options={{ drawerItemStyle: { display: "none" } }} />
+      <Drawer.Screen name="patients/[id]" options={{ drawerItemStyle: { display: "none" } }} />
       <Drawer.Screen name="payments/index" options={{ title: t("nav.payments"), drawerLabel: t("nav.payments") }} />
       <Drawer.Screen name="reports" options={{ title: t("nav.reports"), drawerLabel: t("nav.reports") }} />
       <Drawer.Screen name="help" options={{ title: t("nav.help"), drawerLabel: t("nav.help") }} />

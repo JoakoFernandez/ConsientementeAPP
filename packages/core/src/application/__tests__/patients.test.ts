@@ -26,7 +26,7 @@ const validInput = {
   ageCategory: PatientAgeCategory.ADULT,
   age: 30,
   parentsNames: "María y Pedro",
-  regularSchedule: null,
+  regularSchedules: [],
   paymentFrequency: PaymentFrequency.PER_SESSION,
   paymentAmount: 100000,
   notes: "",
@@ -64,16 +64,31 @@ describe("RegisterPatient", () => {
     expect(saved).not.toBeNull();
   });
 
-  it("creates patient with regular schedule", async () => {
+  it("creates patient with regular schedules", async () => {
     const repo = createMockRepo();
     const useCase = new RegisterPatient(repo);
 
     const patient = await useCase.execute({
       ...validInput,
-      regularSchedule: { weekDay: "TUESDAY" as any, time: "09:00" },
+      regularSchedules: [
+        { weekDay: "TUESDAY" as any, time: "09:00" },
+        { weekDay: "THURSDAY" as any, time: "16:30" },
+      ],
     });
 
-    expect(patient.regularSchedule).toEqual({ weekDay: "TUESDAY", time: "09:00" });
+    expect(patient.regularSchedules).toEqual([
+      { weekDay: "TUESDAY", time: "09:00" },
+      { weekDay: "THURSDAY", time: "16:30" },
+    ]);
+  });
+
+  it("creates patient with empty schedules by default", async () => {
+    const repo = createMockRepo();
+    const useCase = new RegisterPatient(repo);
+
+    const patient = await useCase.execute(validInput);
+
+    expect(patient.regularSchedules).toEqual([]);
   });
 
   it("creates patient with WEEKLY frequency", async () => {

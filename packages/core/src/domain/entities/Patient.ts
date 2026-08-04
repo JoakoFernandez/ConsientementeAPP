@@ -15,7 +15,7 @@ export interface Patient {
   ageCategory: PatientAgeCategory;
   age: number;
   parentsNames: string;
-  regularSchedule: RegularSchedule | null;
+  regularSchedules: RegularSchedule[];
   paymentFrequency: PaymentFrequency;
   paymentAmount: number;
   notes: string;

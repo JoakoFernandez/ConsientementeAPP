@@ -47,8 +47,13 @@ export const en = {
     noPatients: "No patients registered",
     notFound: "Patient not found",
     addSchedule: "Add regular schedule",
+    noSchedule: "No regular schedule",
     paymentLabel: "Payment",
     requiredFields: "ID, name and age are required",
+  },
+  weekday: {
+    monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday", thursday: "Thursday",
+    friday: "Friday", saturday: "Saturday", sunday: "Sunday",
   },
   session: {
     title: "Sessions",

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Patient } from "@consientemente/core";
-import { formatCurrency } from "../utils/formatters";
+import { formatCurrency, getWeekDayLabel } from "../utils/formatters";
 import { t } from "../i18n";
 import { colors, radius, cardShadow } from "../theme";
 
@@ -28,10 +28,14 @@ export function PatientCard({ patient, onPress }: PatientCardProps) {
       <Text style={styles.frequency}>
         {freqLabel} - {formatCurrency(patient.paymentAmount)}
       </Text>
-      {patient.regularSchedule && (
-        <Text style={styles.schedule}>
-          {patient.regularSchedule.weekDay} {patient.regularSchedule.time}
-        </Text>
+      {patient.regularSchedules.length > 0 && (
+        <View style={styles.scheduleList}>
+          {patient.regularSchedules.map((s, i) => (
+            <Text key={i} style={styles.schedule}>
+              {getWeekDayLabel(s.weekDay)} {s.time}
+            </Text>
+          ))}
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -56,5 +60,6 @@ const styles = StyleSheet.create({
   adultText: { color: colors.textSecondary },
   dni: { fontSize: 13, color: colors.textSecondary, marginBottom: 4 },
   frequency: { fontSize: 13, color: colors.text, marginBottom: 2 },
+  scheduleList: { marginTop: 4 },
   schedule: { fontSize: 12, color: colors.primary, fontWeight: "500" },
 });

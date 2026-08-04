@@ -27,14 +27,13 @@ export class SqlitePatientRepository implements PatientRepository {
     const existing = await this.findById(patient.id);
     const cols = [
       "id", "dni", "name", "bankAccount", "ageCategory", "age",
-      "parentsNames", "regularWeekDay", "regularTime", "paymentFrequency",
+      "parentsNames", "regularSchedules", "paymentFrequency",
       "paymentAmount", "notes", "isActive", "createdAt", "updatedAt",
     ];
     const vals = [
       patient.id, patient.dni, patient.name, patient.bankAccount,
       patient.ageCategory, patient.age, patient.parentsNames,
-      patient.regularSchedule?.weekDay ?? null,
-      patient.regularSchedule?.time ?? null,
+      JSON.stringify(patient.regularSchedules),
       patient.paymentFrequency, patient.paymentAmount, patient.notes,
       patient.isActive ? 1 : 0,
       patient.createdAt.toISOString(), patient.updatedAt.toISOString(),
@@ -53,6 +52,21 @@ export class SqlitePatientRepository implements PatientRepository {
     await db.runAsync("UPDATE patients SET isActive=0, updatedAt=? WHERE id=?", new Date().toISOString(), id);
   }
 
+  private parseSchedules(row: any): RegularSchedule[] {
+    if (row.regularSchedules) {
+      try {
+        const parsed = JSON.parse(row.regularSchedules);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        /* fall through to legacy */
+      }
+    }
+    if (row.regularWeekDay && row.regularTime) {
+      return [{ weekDay: row.regularWeekDay, time: row.regularTime }];
+    }
+    return [];
+  }
+
   private toDomain(row: any): Patient {
     return {
       id: row.id,
@@ -62,7 +76,7 @@ export class SqlitePatientRepository implements PatientRepository {
       ageCategory: row.ageCategory,
       age: row.age,
       parentsNames: row.parentsNames,
-      regularSchedule: row.regularWeekDay ? { weekDay: row.regularWeekDay, time: row.regularTime } : null,
+      regularSchedules: this.parseSchedules(row),
       paymentFrequency: row.paymentFrequency,
       paymentAmount: row.paymentAmount,
       notes: row.notes,

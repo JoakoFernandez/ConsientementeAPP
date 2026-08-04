@@ -1,4 +1,4 @@
-import { Patient, PatientRepository, PatientFilters } from "@consientemente/core";
+import { Patient, PatientRepository, PatientFilters, RegularSchedule } from "@consientemente/core";
 import { readRows, writeRows } from "./storage";
 
 const TABLE = "patients";
@@ -11,8 +11,9 @@ interface PatientRow {
   ageCategory: string;
   age: number;
   parentsNames: string;
-  regularWeekDay: string | null;
-  regularTime: string | null;
+  regularSchedules: string | null;
+  regularWeekDay?: string | null;
+  regularTime?: string | null;
   paymentFrequency: string;
   paymentAmount: number;
   notes: string;
@@ -48,8 +49,7 @@ export class LocalStoragePatientRepository implements PatientRepository {
       ageCategory: patient.ageCategory,
       age: patient.age,
       parentsNames: patient.parentsNames,
-      regularWeekDay: patient.regularSchedule?.weekDay ?? null,
-      regularTime: patient.regularSchedule?.time ?? null,
+      regularSchedules: JSON.stringify(patient.regularSchedules),
       paymentFrequency: patient.paymentFrequency,
       paymentAmount: patient.paymentAmount,
       notes: patient.notes,
@@ -69,6 +69,21 @@ export class LocalStoragePatientRepository implements PatientRepository {
     writeRows(TABLE, rows);
   }
 
+  private parseSchedules(row: PatientRow): RegularSchedule[] {
+    if (row.regularSchedules) {
+      try {
+        const parsed = JSON.parse(row.regularSchedules);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        /* fall through to legacy */
+      }
+    }
+    if (row.regularWeekDay && row.regularTime) {
+      return [{ weekDay: row.regularWeekDay as any, time: row.regularTime }];
+    }
+    return [];
+  }
+
   private toDomain(row: PatientRow): Patient {
     return {
       id: row.id,
@@ -78,7 +93,7 @@ export class LocalStoragePatientRepository implements PatientRepository {
       ageCategory: row.ageCategory as any,
       age: row.age,
       parentsNames: row.parentsNames,
-      regularSchedule: row.regularWeekDay ? { weekDay: row.regularWeekDay as any, time: row.regularTime ?? "" } : null,
+      regularSchedules: this.parseSchedules(row),
       paymentFrequency: row.paymentFrequency as any,
       paymentAmount: row.paymentAmount,
       notes: row.notes,

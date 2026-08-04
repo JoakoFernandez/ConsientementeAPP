@@ -22,6 +22,7 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void
       parentsNames TEXT NOT NULL,
       regularWeekDay TEXT,
       regularTime TEXT,
+      regularSchedules TEXT,
       paymentFrequency TEXT NOT NULL,
       paymentAmount REAL NOT NULL,
       notes TEXT DEFAULT '',

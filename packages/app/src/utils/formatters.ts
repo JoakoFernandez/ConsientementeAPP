@@ -1,4 +1,5 @@
 import { useSettingsStore } from "../stores/settingsStore";
+import { t } from "../i18n";
 import { colors } from "../theme";
 
 export function currencySymbol(): string {
@@ -16,6 +17,19 @@ export function getFrequencyLabel(frequency: string): string {
     MONTHLY: "Mensual / Monthly",
   };
   return labels[frequency] || frequency;
+}
+
+export function getWeekDayLabel(weekDay: string): string {
+  const labels: Record<string, string> = {
+    MONDAY: t("weekday.monday"),
+    TUESDAY: t("weekday.tuesday"),
+    WEDNESDAY: t("weekday.wednesday"),
+    THURSDAY: t("weekday.thursday"),
+    FRIDAY: t("weekday.friday"),
+    SATURDAY: t("weekday.saturday"),
+    SUNDAY: t("weekday.sunday"),
+  };
+  return labels[weekDay] || weekDay;
 }
 
 export function getStatusColor(status: string): string {

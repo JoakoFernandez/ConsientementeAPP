@@ -47,8 +47,13 @@ export const it = {
     noPatients: "Nessun paziente registrato",
     notFound: "Paziente non trovato",
     addSchedule: "Aggiungi orario regolare",
+    noSchedule: "Nessun orario regolare",
     paymentLabel: "Pagamento",
     requiredFields: "Codice fiscale, nome ed età sono obbligatori",
+  },
+  weekday: {
+    monday: "Lunedì", tuesday: "Martedì", wednesday: "Mercoledì", thursday: "Giovedì",
+    friday: "Venerdì", saturday: "Sabato", sunday: "Domenica",
   },
   session: {
     title: "Sedute",

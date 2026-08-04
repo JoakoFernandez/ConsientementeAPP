@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePatientStore } from "../../../src/stores/patientStore";
 import { useSessionStore } from "../../../src/stores/sessionStore";
 import { usePaymentStore } from "../../../src/stores/paymentStore";
-import { formatCurrency, getFrequencyLabel, getStatusColor } from "../../../src/utils/formatters";
+import { formatCurrency, getFrequencyLabel, getStatusColor, getWeekDayLabel } from "../../../src/utils/formatters";
 import { formatDate, formatTime } from "../../../src/utils/date";
 import { t } from "../../../src/i18n";
 import { colors, radius, cardShadow } from "../../../src/theme";
@@ -43,7 +43,15 @@ export default function PatientDetail() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={styles.headerCard}>
-        <Text style={styles.name}>{patient.name}</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.name}>{patient.name}</Text>
+          <TouchableOpacity
+            style={styles.editBtn}
+            onPress={() => router.push(`/(drawer)/patients/edit?id=${patient.id}`)}
+          >
+            <Text style={styles.editBtnText}>{t("patient.edit")}</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.dni}>{t("patient.dni")}: {patient.dni}</Text>
         <View style={styles.badgeRow}>
           <View style={[styles.badge, patient.ageCategory === "MINOR" ? styles.minorBadge : styles.adultBadge]}>
@@ -54,11 +62,15 @@ export default function PatientDetail() {
         </View>
         {patient.parentsNames && <Text style={styles.parents}>{t("patient.parentsNames")}: {patient.parentsNames}</Text>}
         {patient.bankAccount && <Text style={styles.info}>{t("patient.bankAccount")}: {patient.bankAccount}</Text>}
-        {patient.regularSchedule && (
-          <Text style={styles.info}>
-            {t("patient.regularSchedule")}: {patient.regularSchedule.weekDay} a las {patient.regularSchedule.time}
-          </Text>
-        )}
+        {patient.regularSchedules?.length ? (
+          <View style={styles.scheduleList}>
+            {patient.regularSchedules.map((s: any, i: number) => (
+              <Text key={i} style={styles.info}>
+                {t("patient.regularSchedule")}: {getWeekDayLabel(s.weekDay)} a las {s.time}
+              </Text>
+            ))}
+          </View>
+        ) : null}
         <Text style={styles.info}>{t("patient.paymentLabel")}: {getFrequencyLabel(patient.paymentFrequency)} - {formatCurrency(patient.paymentAmount)}</Text>
         {patient.notes ? <Text style={styles.notes}>{t("patient.notes")}: {patient.notes}</Text> : null}
       </View>
@@ -100,6 +112,9 @@ const styles = StyleSheet.create({
   notFound: { color: colors.textSecondary, fontSize: 16 },
   headerCard: { backgroundColor: colors.surface, margin: radius.md, borderRadius: radius.md, padding: radius.lg, ...cardShadow },
   name: { fontSize: 20, fontWeight: "700", color: colors.text },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  editBtn: { backgroundColor: colors.primaryLight, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 },
+  editBtnText: { color: colors.primaryDark, fontSize: 12, fontWeight: "700" },
   dni: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
   badgeRow: { flexDirection: "row", marginTop: 8 },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
@@ -109,6 +124,7 @@ const styles = StyleSheet.create({
   minorText: { color: colors.infoText },
   adultText: { color: colors.textSecondary },
   parents: { fontSize: 13, color: colors.text, marginTop: 8 },
+  scheduleList: { marginTop: 2 },
   info: { fontSize: 13, color: colors.text, marginTop: 4 },
   notes: { fontSize: 12, color: colors.textSecondary, marginTop: 8, fontStyle: "italic" },
   statsRow: { flexDirection: "row", marginHorizontal: radius.md, gap: 8, marginBottom: 8 },

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Session, Patient, SessionStatus } from "@consientemente/core";
 import { formatTime, formatDate } from "../utils/date";
 import { getWeekDay } from "../utils/holidays";
+import { getWeekDayLabel } from "../utils/formatters";
 import { t } from "../i18n";
 import { colors, radius, cardShadow } from "../theme";
 
@@ -11,7 +12,7 @@ interface DayPlanPanelProps {
   sessions: Session[];
   patients: Patient[];
   holiday?: string | null;
-  onAddPatient: (patient: Patient) => void;
+  onAddPatient: (patient: Patient, time?: string) => void;
   onRemovePatient: (session: Session) => void;
   onToggleStatus: (session: Session, status: SessionStatus) => void;
 }
@@ -27,30 +28,57 @@ export function DateDetailPanel({
 }: DayPlanPanelProps) {
   const [showAddList, setShowAddList] = useState(false);
 
-  const addedIds = useMemo(() => new Set(sessions.map((s) => s.patientId)), [sessions]);
+  const addedPatientIds = useMemo(() => new Set(sessions.map((s) => s.patientId)), [sessions]);
+  const addedScheduleKeys = useMemo(
+    () =>
+      new Set(
+        sessions.map((s) => {
+          const d = new Date(s.date);
+          const hh = String(d.getHours()).padStart(2, "0");
+          const mm = String(d.getMinutes()).padStart(2, "0");
+          return `${s.patientId}|${hh}:${mm}`;
+        })
+      ),
+    [sessions]
+  );
   const dayWeekDay = getWeekDay(date);
 
-  const regularPatients = useMemo(
+  const regularRows = useMemo(() => {
+    const rows: { patient: Patient; time: string }[] = [];
+    for (const p of patients) {
+      if (!p.isActive) continue;
+      for (const s of p.regularSchedules) {
+        if (s.weekDay !== dayWeekDay) continue;
+        const key = `${p.id}|${s.time}`;
+        if (addedScheduleKeys.has(key)) continue;
+        rows.push({ patient: p, time: s.time });
+      }
+    }
+    return rows;
+  }, [patients, addedScheduleKeys, dayWeekDay]);
+
+  const regularPatientIds = useMemo(
     () =>
-      patients.filter(
-        (p) =>
-          p.isActive &&
-          p.regularSchedule &&
-          p.regularSchedule.weekDay === dayWeekDay &&
-          !addedIds.has(p.id)
+      new Set(
+        patients
+          .filter((p) => p.isActive && p.regularSchedules.some((s) => s.weekDay === dayWeekDay))
+          .map((p) => p.id)
       ),
-    [patients, addedIds, dayWeekDay]
+    [patients, dayWeekDay]
   );
 
-  const regularIds = useMemo(() => new Set(regularPatients.map((p) => p.id)), [regularPatients]);
-
   const otherPatients = useMemo(
-    () => patients.filter((p) => p.isActive && !addedIds.has(p.id) && !regularIds.has(p.id)),
-    [patients, addedIds, regularIds]
+    () =>
+      patients.filter(
+        (p) => p.isActive && !addedPatientIds.has(p.id) && !regularPatientIds.has(p.id)
+      ),
+    [patients, addedPatientIds, regularPatientIds]
   );
 
   const getPatientName = (patientId: string) =>
     patients.find((p) => p.id === patientId)?.name ?? t("common.unknown");
+
+  const defaultTime = (patient: Patient) => patient.regularSchedules[0]?.time ?? "09:00";
 
   const renderStatusChips = (session: Session) => (
     <View style={styles.chipRow}>
@@ -119,18 +147,18 @@ export function DateDetailPanel({
       )}
 
       <Text style={styles.sectionTitle}>{t("calendar.regularSchedule")}</Text>
-      {regularPatients.length === 0 ? (
+      {regularRows.length === 0 ? (
         <Text style={styles.emptyText}>{t("calendar.noRegularSchedule")}</Text>
       ) : (
-        regularPatients.map((p) => (
-          <View key={p.id} style={styles.suggestCard}>
+        regularRows.map(({ patient, time }, i) => (
+          <View key={`${patient.id}-${time}-${i}`} style={styles.suggestCard}>
             <View style={styles.suggestInfo}>
-              <Text style={styles.patientName}>{p.name}</Text>
+              <Text style={styles.patientName}>{patient.name}</Text>
               <Text style={styles.sessionTime}>
-                {t("patient.regularSchedule")}: {formatTime(dateFromTime(date, p.regularSchedule!.time))}
+                {getWeekDayLabel(dayWeekDay)} · {formatTime(dateFromTime(date, time))}
               </Text>
             </View>
-            <TouchableOpacity style={styles.addBtn} onPress={() => onAddPatient(p)}>
+            <TouchableOpacity style={styles.addBtn} onPress={() => onAddPatient(patient, time)}>
               <Text style={styles.addBtnText}>+</Text>
             </TouchableOpacity>
           </View>
@@ -149,9 +177,9 @@ export function DateDetailPanel({
           <View key={p.id} style={styles.suggestCard}>
             <View style={styles.suggestInfo}>
               <Text style={styles.patientName}>{p.name}</Text>
-              <Text style={styles.sessionTime}>{formatTime(dateFromTime(date, p.regularSchedule?.time ?? "09:00"))}</Text>
+              <Text style={styles.sessionTime}>{formatTime(dateFromTime(date, defaultTime(p)))}</Text>
             </View>
-            <TouchableOpacity style={styles.addBtn} onPress={() => onAddPatient(p)}>
+            <TouchableOpacity style={styles.addBtn} onPress={() => onAddPatient(p, defaultTime(p))}>
               <Text style={styles.addBtnText}>+</Text>
             </TouchableOpacity>
           </View>

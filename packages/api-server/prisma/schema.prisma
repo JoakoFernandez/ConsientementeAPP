@@ -48,8 +48,7 @@ model Patient {
   ageCategory      PatientAgeCategory
   age              Int
   parentsNames     String
-  regularWeekDay   WeekDay?
-  regularTime      String?
+  regularSchedules String?
   paymentFrequency PaymentFrequency
   paymentAmount    Float
   notes            String            @default("")

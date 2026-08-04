@@ -47,8 +47,13 @@ export const es = {
     noPatients: "No hay pacientes registrados",
     notFound: "Paciente no encontrado",
     addSchedule: "Agregar horario regular",
+    noSchedule: "Sin horario regular",
     paymentLabel: "Pago",
     requiredFields: "DNI, nombre y edad son obligatorios",
+  },
+  weekday: {
+    monday: "Lunes", tuesday: "Martes", wednesday: "Miércoles", thursday: "Jueves",
+    friday: "Viernes", saturday: "Sábado", sunday: "Domingo",
   },
   session: {
     title: "Sesiones",

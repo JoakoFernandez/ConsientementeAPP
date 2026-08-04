@@ -46,7 +46,7 @@ export class PrismaPatientRepository implements PatientRepository {
       ageCategory: p.ageCategory,
       age: p.age,
       parentsNames: p.parentsNames,
-      regularSchedule: p.regularWeekDay ? { weekDay: p.regularWeekDay, time: p.regularTime } : null,
+      regularSchedules: this.parseSchedules(p.regularSchedules),
       paymentFrequency: p.paymentFrequency,
       paymentAmount: p.paymentAmount,
       notes: p.notes,
@@ -54,6 +54,16 @@ export class PrismaPatientRepository implements PatientRepository {
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     };
+  }
+
+  private parseSchedules(raw: string | null): Patient["regularSchedules"] {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   }
 
   private toPrisma(patient: Patient): any {
@@ -64,8 +74,7 @@ export class PrismaPatientRepository implements PatientRepository {
       ageCategory: patient.ageCategory,
       age: patient.age,
       parentsNames: patient.parentsNames,
-      regularWeekDay: patient.regularSchedule?.weekDay ?? null,
-      regularTime: patient.regularSchedule?.time ?? null,
+      regularSchedules: JSON.stringify(patient.regularSchedules),
       paymentFrequency: patient.paymentFrequency,
       paymentAmount: patient.paymentAmount,
       notes: patient.notes,

@@ -48,13 +48,11 @@ export default function Calendar() {
     return d.toDateString() === selectedDate.toDateString();
   });
 
-  async function addPatient(patient: Patient) {
+  async function addPatient(patient: Patient, time?: string) {
     const confirm = (confirmed: boolean) => {
       const date = new Date(selectedDate);
-      const time = patient.regularSchedule
-        ? patient.regularSchedule.time
-        : `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
-      const [h, m] = time.split(":").map((n) => parseInt(n, 10));
+      const t = time ?? patient.regularSchedules?.[0]?.time ?? `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
+      const [h, m] = t.split(":").map((n) => parseInt(n, 10));
       date.setHours(h || 9, m || 0, 0, 0);
       schedule({
         patientId: patient.id,
