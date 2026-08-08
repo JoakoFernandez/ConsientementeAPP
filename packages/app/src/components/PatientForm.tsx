@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { Patient, PaymentFrequency, PatientAgeCategory, WeekDay, RegularSchedule, BankAccount } from "@consientemente/core";
 import { t } from "../i18n";
+import { showAlert } from "../utils/alert";
 import { currencySymbol, getWeekDayLabel } from "../utils/formatters";
 import { colors, radius, cardShadow } from "../theme";
 
@@ -94,7 +95,7 @@ export function PatientForm({ initial, onSubmit }: PatientFormProps) {
   async function handleSave() {
     const error = validate();
     if (error) {
-      Alert.alert(t("common.error"), error);
+      showAlert(t("common.error"), error);
       return;
     }
     setSaving(true);

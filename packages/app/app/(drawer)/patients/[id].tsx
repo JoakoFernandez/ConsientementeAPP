@@ -5,7 +5,7 @@ import { usePatientStore } from "../../../src/stores/patientStore";
 import { useSessionStore } from "../../../src/stores/sessionStore";
 import { usePaymentStore } from "../../../src/stores/paymentStore";
 import { SessionFormModal } from "../../../src/components/SessionFormModal";
-import { formatCurrency, getFrequencyLabel, getStatusColor, getWeekDayLabel } from "../../../src/utils/formatters";
+import { formatCurrency, getFrequencyLabel, getStatusColor, getStatusLabel, getWeekDayLabel } from "../../../src/utils/formatters";
 import { formatDate, formatTime } from "../../../src/utils/date";
 import { t } from "../../../src/i18n";
 import { colors, radius, cardShadow } from "../../../src/theme";
@@ -19,6 +19,7 @@ export default function PatientDetail() {
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSessionModal, setShowSessionModal] = useState(false);
+  const [sessionFilter, setSessionFilter] = useState<"all" | "upcoming" | "past">("all");
 
   useEffect(() => {
     loadData();
@@ -52,6 +53,16 @@ export default function PatientDetail() {
 
   const totalPaid = payments.filter((p) => p.status === "PAID").reduce((s, p) => s + p.amount, 0);
   const totalPending = payments.filter((p) => p.status === "PENDING").reduce((s, p) => s + p.amount, 0);
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const sortedSessions = [...sessions].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  let filteredSessions = sortedSessions;
+  if (sessionFilter === "upcoming") {
+    filteredSessions = sortedSessions.filter((s: any) => new Date(s.date).getTime() >= now.getTime());
+  } else if (sessionFilter === "past") {
+    filteredSessions = sortedSessions.filter((s: any) => new Date(s.date).getTime() < now.getTime());
+  }
 
   return (
     <>
@@ -112,15 +123,35 @@ export default function PatientDetail() {
       </View>
 
       <Text style={styles.sectionTitle}>{t("session.title")}</Text>
-      {sessions.slice(0, 10).map((s) => (
-        <View key={s.id} style={styles.itemCard}>
-          <View style={styles.itemRow}>
-            <Text style={styles.itemDate}>{formatDate(new Date(s.date))}</Text>
-            <View style={[styles.statusDot, { backgroundColor: getStatusColor(s.status) }]} />
+      <View style={styles.filterRow}>
+        {(["all", "upcoming", "past"] as const).map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.filterChip, sessionFilter === f && styles.filterChipActive]}
+            onPress={() => setSessionFilter(f)}
+          >
+            <Text style={[styles.filterChipText, sessionFilter === f && styles.filterChipTextActive]}>
+              {t(`session.${f}`)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {filteredSessions.length === 0 ? (
+        <Text style={styles.emptyText}>{t("session.noSessions")}</Text>
+      ) : (
+        filteredSessions.map((s) => (
+          <View key={s.id} style={styles.itemCard}>
+            <View style={styles.itemRow}>
+              <Text style={styles.itemDate}>{formatDate(new Date(s.date))}</Text>
+              <View style={styles.statusBadge}>
+                <View style={[styles.statusDot, { backgroundColor: getStatusColor(s.status) }]} />
+                <Text style={styles.statusBadgeText}>{getStatusLabel(s.status)}</Text>
+              </View>
+            </View>
+            <Text style={styles.itemDetail}>{formatTime(new Date(s.date))} · {s.duration}min</Text>
           </View>
-          <Text style={styles.itemDetail}>{formatTime(new Date(s.date))} · {s.duration}min</Text>
-        </View>
-      ))}
+        ))
+      )}
 
       <Text style={styles.sectionTitle}>{t("payment.title")}</Text>
       {payments.slice(0, 10).map((p) => (
@@ -181,4 +212,20 @@ const styles = StyleSheet.create({
   itemDate: { fontSize: 14, fontWeight: "500", color: colors.text },
   statusDot: { width: 10, height: 10, borderRadius: 5 },
   itemDetail: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  filterRow: { flexDirection: "row", gap: 6, marginHorizontal: radius.md, marginBottom: 8 },
+  filterChip: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignItems: "center",
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  filterChipActive: { backgroundColor: colors.primary },
+  filterChipText: { fontSize: 12, fontWeight: "600", color: colors.textSecondary },
+  filterChipTextActive: { color: colors.white },
+  emptyText: { color: colors.textMuted, fontStyle: "italic", marginHorizontal: radius.md, marginBottom: 8 },
+  statusBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
+  statusBadgeText: { fontSize: 11, fontWeight: "600", color: colors.textSecondary },
 });

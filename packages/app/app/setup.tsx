@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useClinicStore } from "../src/stores/clinicStore";
 import { t } from "../src/i18n";
+import { showAlert } from "../src/utils/alert";
 import { colors, radius, cardShadow } from "../src/theme";
 
 export default function Setup() {
@@ -14,7 +15,7 @@ export default function Setup() {
 
   async function handleStart() {
     if (!clinicName.trim()) {
-      Alert.alert("", t("setup.required"));
+      showAlert("", t("setup.required"));
       return;
     }
     setSaving(true);

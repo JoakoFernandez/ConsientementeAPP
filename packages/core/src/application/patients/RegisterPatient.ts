@@ -2,13 +2,14 @@ import { Patient, RegularSchedule, BankAccount } from "../../domain/entities/Pat
 import { PatientRepository } from "../../domain/ports/PatientRepository";
 import { PatientAgeCategory } from "../../domain/value-objects/PatientAgeCategory";
 import { PaymentFrequency } from "../../domain/value-objects/PaymentFrequency";
+import { newId } from "../../utils/uuid";
 
 export class RegisterPatient {
   constructor(private readonly patientRepo: PatientRepository) {}
 
   async execute(input: RegisterPatientInput): Promise<Patient> {
     const patient: Patient = {
-      id: crypto.randomUUID(),
+      id: newId(),
       dni: input.dni,
       name: input.name,
       bankAccounts: input.bankAccounts ?? [],

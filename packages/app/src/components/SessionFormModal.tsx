@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Modal, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { Modal, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { Patient } from "@consientemente/core";
 import { t } from "../i18n";
+import { showAlert } from "../utils/alert";
 import { colors, radius, cardShadow } from "../theme";
 
 export interface SessionFormInput {
@@ -76,32 +77,32 @@ export function SessionFormModal({
   async function handleSave() {
     const pId = patientId || selectedPatient?.id || "";
     if (!pId) {
-      Alert.alert(t("common.error"), t("session.needPatient"));
+      showAlert(t("common.error"), t("session.needPatient"));
       return;
     }
     const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dateText.trim());
     const tMatch = TIME_RE.exec(timeText.trim());
     if (!m) {
-      Alert.alert(t("common.error"), t("session.invalidDate"));
+      showAlert(t("common.error"), t("session.invalidDate"));
       return;
     }
     const [, d, mo, y] = m.map((n) => parseInt(n, 10)) as any;
     if (mo < 1 || mo > 12 || d < 1 || d > 31) {
-      Alert.alert(t("common.error"), t("session.invalidDate"));
+      showAlert(t("common.error"), t("session.invalidDate"));
       return;
     }
     const numDate = new Date(y, mo - 1, d);
     if (numDate.getFullYear() !== y || numDate.getMonth() !== mo - 1 || numDate.getDate() !== d) {
-      Alert.alert(t("common.error"), t("session.invalidDate"));
+      showAlert(t("common.error"), t("session.invalidDate"));
       return;
     }
     if (!tMatch) {
-      Alert.alert(t("common.error"), t("patient.invalidTime"));
+      showAlert(t("common.error"), t("patient.invalidTime"));
       return;
     }
     const dur = parseInt(duration, 10);
     if (!duration || Number.isNaN(dur) || dur <= 0 || dur > 999) {
-      Alert.alert(t("common.error"), t("session.invalidDuration"));
+      showAlert(t("common.error"), t("session.invalidDuration"));
       return;
     }
     numDate.setHours(parseInt(tMatch[1], 10), parseInt(tMatch[2], 10), 0, 0);

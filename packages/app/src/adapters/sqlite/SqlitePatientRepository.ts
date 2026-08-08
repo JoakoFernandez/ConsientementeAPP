@@ -26,12 +26,14 @@ export class SqlitePatientRepository implements PatientRepository {
     const db = await getDatabase();
     const existing = await this.findById(patient.id);
     const cols = [
-      "id", "dni", "name", "bankAccounts", "ageCategory", "age",
+      "id", "dni", "name", "bankAccount", "bankAccounts", "ageCategory", "age",
       "parentsNames", "regularSchedules", "paymentFrequency",
       "paymentAmount", "notes", "isActive", "createdAt", "updatedAt",
     ];
     const vals = [
-      patient.id, patient.dni, patient.name, JSON.stringify(patient.bankAccounts),
+      patient.id, patient.dni, patient.name,
+      patient.bankAccounts?.[0]?.accountNumber ?? "",
+      JSON.stringify(patient.bankAccounts),
       patient.ageCategory, patient.age, patient.parentsNames,
       JSON.stringify(patient.regularSchedules),
       patient.paymentFrequency, patient.paymentAmount, patient.notes,

@@ -1,13 +1,14 @@
 import { Session } from "../../domain/entities/Session";
 import { SessionRepository } from "../../domain/ports/SessionRepository";
 import { SessionStatus } from "../../domain/value-objects/SessionStatus";
+import { newId } from "../../utils/uuid";
 
 export class ScheduleSession {
   constructor(private readonly sessionRepo: SessionRepository) {}
 
   async execute(input: ScheduleSessionInput): Promise<Session> {
     const session: Session = {
-      id: crypto.randomUUID(),
+      id: newId(),
       patientId: input.patientId,
       date: input.date,
       duration: input.duration,

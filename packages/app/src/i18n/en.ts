@@ -86,6 +86,9 @@ export const en = {
     invalidDuration: "Duration must be a number greater than 0",
     today: "Today",
     tomorrow: "Tomorrow",
+    all: "All",
+    upcoming: "Upcoming",
+    past: "Past",
   },
   payment: {
     title: "Payments",

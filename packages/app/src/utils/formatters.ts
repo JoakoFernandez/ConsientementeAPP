@@ -45,3 +45,17 @@ export function getStatusColor(status: string): string {
   };
   return palette[status] || colors.textMuted;
 }
+
+export function getStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    PAID: t("payment.paid"),
+    PENDING: t("payment.pending"),
+    OVERDUE: t("payment.overdue"),
+    SCHEDULED: t("session.scheduled"),
+    COMPLETED: t("session.completed"),
+    CANCELLED: t("session.cancelled"),
+    WAITING_CONFIRMATION: t("session.waitingConfirmation"),
+    CONFIRMED: t("session.confirmed"),
+  };
+  return labels[status] || status;
+}

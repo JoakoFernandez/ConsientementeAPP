@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { SessionStatus, Patient } from "@consientemente/core";
 import { useCalendarStore } from "../../src/stores/calendarStore";
 import { useSessionStore } from "../../src/stores/sessionStore";
@@ -8,6 +8,7 @@ import { CalendarGrid } from "../../src/components/CalendarGrid";
 import { DateDetailPanel } from "../../src/components/DateDetailPanel";
 import { SessionFormModal } from "../../src/components/SessionFormModal";
 import { t } from "../../src/i18n";
+import { confirmAction } from "../../src/utils/alert";
 import { getMonthNames } from "../../src/utils/date";
 import { getHolidaysForRange, getHoliday, getWeekDay } from "../../src/utils/holidays";
 import { colors, radius } from "../../src/theme";
@@ -122,13 +123,12 @@ export default function Calendar() {
     };
 
     if (selectedHoliday) {
-      Alert.alert(
+      confirmAction(
         t("calendar.holiday"),
         t("calendar.holidayWarning", { name: selectedHoliday.name }),
-        [
-          { text: t("calendar.cancelHolidayAdd"), style: "cancel" },
-          { text: t("calendar.confirmHolidayAdd"), onPress: () => confirm(false) },
-        ]
+        () => confirm(false),
+        t("calendar.confirmHolidayAdd"),
+        t("calendar.cancelHolidayAdd")
       );
     } else {
       confirm(false);

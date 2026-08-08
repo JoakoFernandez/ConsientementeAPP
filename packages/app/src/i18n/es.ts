@@ -86,6 +86,9 @@ export const es = {
     invalidDuration: "La duración debe ser un número mayor a 0",
     today: "Hoy",
     tomorrow: "Mañana",
+    all: "Todas",
+    upcoming: "Próximas",
+    past: "Pasadas",
   },
   payment: {
     title: "Pagos",

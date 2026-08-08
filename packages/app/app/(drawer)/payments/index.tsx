@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { usePaymentStore } from "../../../src/stores/paymentStore";
 import { usePatientStore } from "../../../src/stores/patientStore";
 import { PaymentFrequency } from "@consientemente/core";
 import { formatCurrency, getStatusColor, currencySymbol } from "../../../src/utils/formatters";
 import { formatDate } from "../../../src/utils/date";
 import { t } from "../../../src/i18n";
+import { showAlert } from "../../../src/utils/alert";
 import { colors, radius, cardShadow } from "../../../src/theme";
 
 type Period = "daily" | "weekly" | "monthly";
@@ -55,7 +56,7 @@ export default function Payments() {
 
   async function handleNewPayment() {
     if (!newPatientId || !newAmount) {
-      Alert.alert(t("common.error"), t("payment.selectPatientAmount"));
+      showAlert(t("common.error"), t("payment.selectPatientAmount"));
       return;
     }
     await register({

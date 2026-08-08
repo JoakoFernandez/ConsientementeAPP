@@ -2,13 +2,14 @@ import { Payment } from "../../domain/entities/Payment";
 import { PaymentRepository } from "../../domain/ports/PaymentRepository";
 import { PaymentFrequency } from "../../domain/value-objects/PaymentFrequency";
 import { PaymentStatus } from "../../domain/value-objects/PaymentStatus";
+import { newId } from "../../utils/uuid";
 
 export class RegisterPayment {
   constructor(private readonly paymentRepo: PaymentRepository) {}
 
   async execute(input: RegisterPaymentInput): Promise<Payment> {
     const payment: Payment = {
-      id: crypto.randomUUID(),
+      id: newId(),
       patientId: input.patientId,
       amount: input.amount,
       date: input.date,

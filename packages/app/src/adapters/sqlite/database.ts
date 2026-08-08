@@ -6,8 +6,27 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!db) {
     db = await SQLite.openDatabaseAsync("consientemente.db");
     await initializeDatabase(db);
+    await migrateDatabase(db);
   }
   return db;
+}
+
+async function ensureColumn(database: SQLite.SQLiteDatabase, table: string, column: string, definition: string): Promise<void> {
+  try {
+    const rows: any[] = await database.getAllAsync(`PRAGMA table_info(${table})`);
+    if (rows.some((r) => r.name === column)) return;
+    await database.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  } catch {
+    // column already exists or table not present; ignore
+  }
+}
+
+async function migrateDatabase(database: SQLite.SQLiteDatabase): Promise<void> {
+  // Bring older installations in line with the current schema.
+  await ensureColumn(database, "patients", "bankAccounts", "TEXT");
+  await ensureColumn(database, "patients", "regularSchedules", "TEXT");
+  await ensureColumn(database, "patients", "regularWeekDay", "TEXT");
+  await ensureColumn(database, "patients", "regularTime", "TEXT");
 }
 
 async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void> {
@@ -16,7 +35,7 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void
       id TEXT PRIMARY KEY,
       dni TEXT NOT NULL,
       name TEXT NOT NULL,
-      bankAccount TEXT NOT NULL,
+      bankAccount TEXT,
       bankAccounts TEXT,
       ageCategory TEXT NOT NULL,
       age INTEGER NOT NULL,
