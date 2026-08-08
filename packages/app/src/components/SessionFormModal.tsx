@@ -25,7 +25,7 @@ const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 function toDateText(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
-  return `${date.getFullYear()}-${m}-${d}`;
+  return `${d}/${m}/${date.getFullYear()}`;
 }
 
 function addDays(date: Date, days: number): string {
@@ -79,15 +79,19 @@ export function SessionFormModal({
       Alert.alert(t("common.error"), t("session.needPatient"));
       return;
     }
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateText.trim());
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dateText.trim());
     const tMatch = TIME_RE.exec(timeText.trim());
     if (!m) {
       Alert.alert(t("common.error"), t("session.invalidDate"));
       return;
     }
-    const [, y, mo, d] = m.map((n) => parseInt(n, 10)) as any;
+    const [, d, mo, y] = m.map((n) => parseInt(n, 10)) as any;
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) {
+      Alert.alert(t("common.error"), t("session.invalidDate"));
+      return;
+    }
     const numDate = new Date(y, mo - 1, d);
-    if (numDate.getMonth() !== mo - 1 || numDate.getDate() !== d) {
+    if (numDate.getFullYear() !== y || numDate.getMonth() !== mo - 1 || numDate.getDate() !== d) {
       Alert.alert(t("common.error"), t("session.invalidDate"));
       return;
     }
@@ -148,8 +152,8 @@ export function SessionFormModal({
           <TextInput
             style={styles.input}
             value={dateText}
-            onChangeText={setDateText}
-            placeholder="AAAA-MM-DD"
+            onChangeText={(v) => setDateText(v.replace(/[^\d/]/g, ""))}
+            placeholder="DD/MM/YYYY"
             placeholderTextColor={colors.textMuted}
           />
 

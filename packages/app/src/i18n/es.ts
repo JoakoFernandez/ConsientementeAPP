@@ -82,7 +82,7 @@ export const es = {
     time: "Hora",
     selectPatient: "Seleccioná el paciente",
     needPatient: "Elegí un paciente",
-    invalidDate: "Ingresá una fecha válida",
+    invalidDate: "Ingresá una fecha válida en formato DD/MM/AAAA. Ej: 25/12/2025",
     invalidDuration: "La duración debe ser un número mayor a 0",
     today: "Hoy",
     tomorrow: "Mañana",
