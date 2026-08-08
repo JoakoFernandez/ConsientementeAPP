@@ -2,8 +2,6 @@ import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Session, Patient, SessionStatus } from "@consientemente/core";
 import { formatTime, formatDate } from "../utils/date";
-import { getWeekDay } from "../utils/holidays";
-import { getWeekDayLabel } from "../utils/formatters";
 import { t } from "../i18n";
 import { colors, radius, cardShadow } from "../theme";
 
@@ -29,50 +27,10 @@ export function DateDetailPanel({
   const [showAddList, setShowAddList] = useState(false);
 
   const addedPatientIds = useMemo(() => new Set(sessions.map((s) => s.patientId)), [sessions]);
-  const addedScheduleKeys = useMemo(
-    () =>
-      new Set(
-        sessions.map((s) => {
-          const d = new Date(s.date);
-          const hh = String(d.getHours()).padStart(2, "0");
-          const mm = String(d.getMinutes()).padStart(2, "0");
-          return `${s.patientId}|${hh}:${mm}`;
-        })
-      ),
-    [sessions]
-  );
-  const dayWeekDay = getWeekDay(date);
-
-  const regularRows = useMemo(() => {
-    const rows: { patient: Patient; time: string }[] = [];
-    for (const p of patients) {
-      if (!p.isActive) continue;
-      for (const s of p.regularSchedules) {
-        if (s.weekDay !== dayWeekDay) continue;
-        const key = `${p.id}|${s.time}`;
-        if (addedScheduleKeys.has(key)) continue;
-        rows.push({ patient: p, time: s.time });
-      }
-    }
-    return rows;
-  }, [patients, addedScheduleKeys, dayWeekDay]);
-
-  const regularPatientIds = useMemo(
-    () =>
-      new Set(
-        patients
-          .filter((p) => p.isActive && p.regularSchedules.some((s) => s.weekDay === dayWeekDay))
-          .map((p) => p.id)
-      ),
-    [patients, dayWeekDay]
-  );
 
   const otherPatients = useMemo(
-    () =>
-      patients.filter(
-        (p) => p.isActive && !addedPatientIds.has(p.id) && !regularPatientIds.has(p.id)
-      ),
-    [patients, addedPatientIds, regularPatientIds]
+    () => patients.filter((p) => p.isActive && !addedPatientIds.has(p.id)),
+    [patients, addedPatientIds]
   );
 
   const getPatientName = (patientId: string) =>
@@ -146,25 +104,6 @@ export function DateDetailPanel({
         ))
       )}
 
-      <Text style={styles.sectionTitle}>{t("calendar.regularSchedule")}</Text>
-      {regularRows.length === 0 ? (
-        <Text style={styles.emptyText}>{t("calendar.noRegularSchedule")}</Text>
-      ) : (
-        regularRows.map(({ patient, time }, i) => (
-          <View key={`${patient.id}-${time}-${i}`} style={styles.suggestCard}>
-            <View style={styles.suggestInfo}>
-              <Text style={styles.patientName}>{patient.name}</Text>
-              <Text style={styles.sessionTime}>
-                {getWeekDayLabel(dayWeekDay)} · {formatTime(dateFromTime(date, time))}
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.addBtn} onPress={() => onAddPatient(patient, time)}>
-              <Text style={styles.addBtnText}>+</Text>
-            </TouchableOpacity>
-          </View>
-        ))
-      )}
-
       <TouchableOpacity style={styles.addPatientBtn} onPress={() => setShowAddList((v) => !v)}>
         <Text style={styles.addPatientText}>{t("calendar.addPatient")}</Text>
       </TouchableOpacity>
@@ -177,7 +116,11 @@ export function DateDetailPanel({
           <View key={p.id} style={styles.suggestCard}>
             <View style={styles.suggestInfo}>
               <Text style={styles.patientName}>{p.name}</Text>
-              <Text style={styles.sessionTime}>{formatTime(dateFromTime(date, defaultTime(p)))}</Text>
+              <Text style={styles.sessionTime}>
+                {p.regularSchedules.length > 0
+                  ? `${t("patient.weekDay")} ${formatTime(dateFromTime(date, defaultTime(p)))}`
+                  : formatTime(dateFromTime(date, defaultTime(p)))}
+              </Text>
             </View>
             <TouchableOpacity style={styles.addBtn} onPress={() => onAddPatient(p, defaultTime(p))}>
               <Text style={styles.addBtnText}>+</Text>

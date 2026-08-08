@@ -8,7 +8,7 @@ import { CalendarGrid } from "../../src/components/CalendarGrid";
 import { DateDetailPanel } from "../../src/components/DateDetailPanel";
 import { t } from "../../src/i18n";
 import { getMonthNames } from "../../src/utils/date";
-import { getHolidaysForRange, getHoliday } from "../../src/utils/holidays";
+import { getHolidaysForRange, getHoliday, getWeekDay } from "../../src/utils/holidays";
 import { colors, radius } from "../../src/theme";
 
 const DEFAULT_DURATION = 50;
@@ -33,15 +33,62 @@ export default function Calendar() {
     const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
     const end = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
     await Promise.all([loadPatients(), loadSessions(start, end)]);
+    ensureScheduleSessions();
     setLoading(false);
   }
+
+  const selectedHoliday = getHoliday(selectedDate);
+
+  async function ensureScheduleSessions() {
+    // Auto-materialize a session for each active patient whose regular schedule
+    // falls on the selected weekday, so schedule-based patients appear as part of
+    // "patients of the day". Skipped on holidays (user adds them manually with a warning).
+    if (selectedHoliday) return;
+    const dayWeekDay = getWeekDay(selectedDate);
+    const daySessions = sessions.filter(
+      (s) => new Date(s.date).toDateString() === selectedDate.toDateString()
+    );
+    const existingKeys = new Set(
+      daySessions.map((s) => {
+        const d = new Date(s.date);
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        return `${s.patientId}|${hh}:${mm}`;
+      })
+    );
+    const toCreate: { patient: Patient; time: string }[] = [];
+    for (const p of patients) {
+      if (!p.isActive) continue;
+      for (const sc of p.regularSchedules) {
+        if (sc.weekDay !== dayWeekDay) continue;
+        const key = `${p.id}|${sc.time}`;
+        if (!existingKeys.has(key)) toCreate.push({ patient: p, time: sc.time });
+      }
+    }
+    for (const { patient, time } of toCreate) {
+      const date = new Date(selectedDate);
+      const [h, m] = time.split(":").map((n) => parseInt(n, 10));
+      date.setHours(h || 9, m || 0, 0, 0);
+      await schedule({
+        patientId: patient.id,
+        date,
+        duration: DEFAULT_DURATION,
+        status: SessionStatus.WAITING_CONFIRMATION,
+      });
+    }
+  }
+
+  useEffect(() => {
+    if (loading) return;
+    if (selectedDate.getMonth() !== currentMonth.getMonth()) return;
+    ensureScheduleSessions();
+  }, [selectedDate]);
 
   const monthSessionDates = sessions.map((s) => new Date(s.date).toISOString().split("T")[0]);
   const holidays = getHolidaysForRange(
     new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1),
     new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
   );
-  const selectedHoliday = getHoliday(selectedDate);
 
   const selectedDateSessions = sessions.filter((s) => {
     const d = new Date(s.date);
