@@ -17,6 +17,7 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void
       dni TEXT NOT NULL,
       name TEXT NOT NULL,
       bankAccount TEXT NOT NULL,
+      bankAccounts TEXT,
       ageCategory TEXT NOT NULL,
       age INTEGER NOT NULL,
       parentsNames TEXT NOT NULL,

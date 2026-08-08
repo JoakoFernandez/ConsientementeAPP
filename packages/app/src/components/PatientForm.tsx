@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from "react-native";
-import { Patient, PaymentFrequency, PatientAgeCategory, WeekDay, RegularSchedule } from "@consientemente/core";
+import { Patient, PaymentFrequency, PatientAgeCategory, WeekDay, RegularSchedule, BankAccount } from "@consientemente/core";
 import { t } from "../i18n";
 import { currencySymbol, getWeekDayLabel } from "../utils/formatters";
 import { colors, radius, cardShadow } from "../theme";
@@ -8,7 +8,7 @@ import { colors, radius, cardShadow } from "../theme";
 export interface PatientFormData {
   dni: string;
   name: string;
-  bankAccount: string;
+  bankAccounts: BankAccount[];
   ageCategory: PatientAgeCategory;
   age: number;
   parentsNames: string;
@@ -23,10 +23,14 @@ interface PatientFormProps {
   onSubmit: (data: PatientFormData) => Promise<void>;
 }
 
+const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
+
 export function PatientForm({ initial, onSubmit }: PatientFormProps) {
   const [dni, setDni] = useState(initial?.dni ?? "");
   const [name, setName] = useState(initial?.name ?? "");
-  const [bankAccount, setBankAccount] = useState(initial?.bankAccount ?? "");
+  const [banks, setBanks] = useState<BankAccount[]>(
+    initial?.bankAccounts?.length ? initial.bankAccounts : []
+  );
   const [ageCategory, setAgeCategory] = useState<PatientAgeCategory>(initial?.ageCategory ?? PatientAgeCategory.ADULT);
   const [age, setAge] = useState(initial ? String(initial.age) : "");
   const [parentsNames, setParentsNames] = useState(initial?.parentsNames ?? "");
@@ -50,16 +54,57 @@ export function PatientForm({ initial, onSubmit }: PatientFormProps) {
     setSchedules((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const updateBank = (index: number, patch: Partial<BankAccount>) => {
+    setBanks((prev) => prev.map((b, i) => (i === index ? { ...b, ...patch } : b)));
+  };
+
+  const addBank = () => {
+    setBanks((prev) => [...prev, { bankName: "", alias: "", accountNumber: "" }]);
+  };
+
+  const removeBank = (index: number) => {
+    setBanks((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  function validate(): string | null {
+    const dniValue = dni.trim();
+    if (!dniValue || !name.trim()) return t("patient.requiredFields");
+    if (!/^\d+$/.test(dniValue)) return t("patient.invalidDni");
+
+    const ageNum = parseInt(age, 10);
+    if (!age || Number.isNaN(ageNum)) return t("patient.invalidAge");
+    if (ageNum < 0 || ageNum > 120) return t("patient.invalidAge");
+
+    const amountNum = parseFloat(paymentAmount);
+    if (paymentAmount !== "" && (Number.isNaN(amountNum) || amountNum < 0)) return t("patient.invalidAmount");
+
+    for (const s of schedules) {
+      if (s.time.trim() !== "" && !TIME_RE.test(s.time.trim())) return t("patient.invalidTime");
+    }
+
+    for (const b of banks) {
+      if (b.accountNumber.trim() !== "" && !/^\d+$/.test(b.accountNumber.trim())) {
+        return t("patient.invalidAccountNumber");
+      }
+    }
+
+    return null;
+  }
+
   async function handleSave() {
-    if (!dni || !name || !age) {
-      Alert.alert(t("common.error"), t("patient.requiredFields"));
+    const error = validate();
+    if (error) {
+      Alert.alert(t("common.error"), error);
       return;
     }
     setSaving(true);
     try {
       await onSubmit({
-        dni, name, bankAccount,
-        ageCategory, age: parseInt(age),
+        dni: dni.trim(),
+        name: name.trim(),
+        bankAccounts: banks.filter((b) => b.bankName.trim() !== "" || b.alias.trim() !== "" || b.accountNumber.trim() !== ""),
+        ageCategory,
+        age: parseInt(age, 10),
         parentsNames,
         regularSchedules: schedules.filter((s) => s.time.trim() !== ""),
         paymentFrequency,
@@ -74,13 +119,32 @@ export function PatientForm({ initial, onSubmit }: PatientFormProps) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <Text style={styles.label}>{t("patient.dni")} *</Text>
-      <TextInput style={styles.input} value={dni} onChangeText={setDni} placeholder="1234567" placeholderTextColor={colors.textMuted} />
+      <TextInput style={styles.input} value={dni} onChangeText={(v) => setDni(v.replace(/[^\d]/g, ""))} keyboardType="numeric" placeholder="1234567" placeholderTextColor={colors.textMuted} />
 
       <Text style={styles.label}>{t("patient.name")} *</Text>
       <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nombre y Apellido" placeholderTextColor={colors.textMuted} />
 
       <Text style={styles.label}>{t("patient.bankAccount")}</Text>
-      <TextInput style={styles.input} value={bankAccount} onChangeText={setBankAccount} placeholder="Número de cuenta" placeholderTextColor={colors.textMuted} />
+      {banks.length === 0 && <Text style={styles.hint}>{t("patient.noBankAccounts")}</Text>}
+      {banks.map((b, idx) => (
+        <View key={idx} style={styles.bankRow}>
+          <View style={styles.bankHeaderRow}>
+            <Text style={styles.bankTitle}>{t("patient.bankAccount")} {idx + 1}</Text>
+            <TouchableOpacity style={styles.removeBtn} onPress={() => removeBank(idx)}>
+              <Text style={styles.removeBtnText}>×</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.subLabel}>{t("patient.bankName")}</Text>
+          <TextInput style={styles.input} value={b.bankName} onChangeText={(v) => updateBank(idx, { bankName: v })} placeholder="Ej. Banco Nacional" placeholderTextColor={colors.textMuted} />
+          <Text style={styles.subLabel}>{t("patient.bankAlias")}</Text>
+          <TextInput style={styles.input} value={b.alias} onChangeText={(v) => updateBank(idx, { alias: v })} placeholder="Ej. JUAN.ALIAS" placeholderTextColor={colors.textMuted} />
+          <Text style={styles.subLabel}>{t("patient.accountNumber")}</Text>
+          <TextInput style={styles.input} value={b.accountNumber} onChangeText={(v) => updateBank(idx, { accountNumber: v.replace(/[^\d]/g, "") })} keyboardType="numeric" placeholder="0000000000" placeholderTextColor={colors.textMuted} />
+        </View>
+      ))}
+      <TouchableOpacity style={styles.addSectionBtn} onPress={addBank}>
+        <Text style={styles.addSectionText}>✚ {t("patient.addBankAccount")}</Text>
+      </TouchableOpacity>
 
       <Text style={styles.label}>{t("patient.ageCategory")}</Text>
       <View style={styles.toggleRow}>
@@ -95,7 +159,7 @@ export function PatientForm({ initial, onSubmit }: PatientFormProps) {
       </View>
 
       <Text style={styles.label}>{t("patient.age")} *</Text>
-      <TextInput style={styles.input} value={age} onChangeText={setAge} keyboardType="numeric" placeholderTextColor={colors.textMuted} />
+      <TextInput style={styles.input} value={age} onChangeText={(v) => setAge(v.replace(/[^\d]/g, ""))} keyboardType="numeric" placeholderTextColor={colors.textMuted} />
 
       <Text style={styles.label}>{t("patient.parentsNames")}</Text>
       <TextInput style={styles.input} value={parentsNames} onChangeText={setParentsNames} placeholder="Padre y Madre" placeholderTextColor={colors.textMuted} />
@@ -127,8 +191,8 @@ export function PatientForm({ initial, onSubmit }: PatientFormProps) {
           </View>
         </View>
       ))}
-      <TouchableOpacity style={styles.addScheduleBtn} onPress={addSchedule}>
-        <Text style={styles.addScheduleText}>✚ {t("patient.addSchedule")}</Text>
+      <TouchableOpacity style={styles.addSectionBtn} onPress={addSchedule}>
+        <Text style={styles.addSectionText}>✚ {t("patient.addSchedule")}</Text>
       </TouchableOpacity>
 
       <Text style={styles.label}>{t("patient.paymentFrequency")}</Text>
@@ -147,7 +211,7 @@ export function PatientForm({ initial, onSubmit }: PatientFormProps) {
       </View>
 
       <Text style={styles.label}>{t("patient.paymentAmount")} ({currencySymbol()})</Text>
-      <TextInput style={styles.input} value={paymentAmount} onChangeText={setPaymentAmount} keyboardType="numeric" placeholder="0" placeholderTextColor={colors.textMuted} />
+      <TextInput style={styles.input} value={paymentAmount} onChangeText={(v) => setPaymentAmount(v.replace(/[^\d.,]/g, ""))} keyboardType="numeric" placeholder="0" placeholderTextColor={colors.textMuted} />
 
       <Text style={styles.label}>{t("patient.notes")}</Text>
       <TextInput style={[styles.input, styles.textArea]} value={notes} onChangeText={setNotes} multiline numberOfLines={3} placeholderTextColor={colors.textMuted} />
@@ -162,6 +226,7 @@ export function PatientForm({ initial, onSubmit }: PatientFormProps) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface, padding: radius.lg },
   label: { fontSize: 14, fontWeight: "600", color: colors.textSecondary, marginTop: radius.md, marginBottom: 4 },
+  subLabel: { fontSize: 12, fontWeight: "600", color: colors.textMuted, marginTop: 6, marginBottom: 2 },
   input: {
     backgroundColor: colors.surfaceSoft, borderRadius: radius.sm, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15,
     borderWidth: 1, borderColor: colors.border, color: colors.text,
@@ -173,6 +238,9 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: 13, color: colors.textSecondary, fontWeight: "500" },
   toggleTextActive: { color: colors.white },
   hint: { fontSize: 12, color: colors.textMuted, fontStyle: "italic", marginBottom: 4 },
+  bankRow: { backgroundColor: colors.surfaceMuted, borderRadius: radius.sm, padding: radius.sm, marginBottom: 8 },
+  bankHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
+  bankTitle: { fontSize: 13, fontWeight: "700", color: colors.text },
   scheduleRow: { backgroundColor: colors.surfaceMuted, borderRadius: radius.sm, padding: radius.sm, marginBottom: 8, gap: 8 },
   scheduleDays: { flexDirection: "row", gap: 4, flexWrap: "wrap" },
   dayBtn: { padding: 6, borderRadius: 6, backgroundColor: colors.surface, minWidth: 42, alignItems: "center" },
@@ -181,8 +249,8 @@ const styles = StyleSheet.create({
   timeInput: { flex: 1 },
   removeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.dangerLight, alignItems: "center", justifyContent: "center" },
   removeBtnText: { fontSize: 20, color: colors.danger, fontWeight: "700", lineHeight: 24 },
-  addScheduleBtn: { paddingVertical: 6 },
-  addScheduleText: { fontSize: 14, fontWeight: "700", color: colors.primary },
+  addSectionBtn: { paddingVertical: 6 },
+  addSectionText: { fontSize: 14, fontWeight: "700", color: colors.primary },
   freqBtn: { flex: 1, paddingVertical: 8, borderRadius: radius.sm, backgroundColor: colors.surfaceMuted, alignItems: "center" },
   freqText: { fontSize: 13, fontWeight: "500", color: colors.textSecondary },
   saveBtn: {

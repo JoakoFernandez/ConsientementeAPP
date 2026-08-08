@@ -1,4 +1,4 @@
-import { Patient, PatientRepository, PatientFilters, RegularSchedule } from "@consientemente/core";
+import { Patient, PatientRepository, PatientFilters, RegularSchedule, BankAccount } from "@consientemente/core";
 import { readRows, writeRows } from "./storage";
 
 const TABLE = "patients";
@@ -7,7 +7,8 @@ interface PatientRow {
   id: string;
   dni: string;
   name: string;
-  bankAccount: string;
+  bankAccounts: string | null;
+  bankAccount?: string | null;
   ageCategory: string;
   age: number;
   parentsNames: string;
@@ -45,7 +46,7 @@ export class LocalStoragePatientRepository implements PatientRepository {
       id: patient.id,
       dni: patient.dni,
       name: patient.name,
-      bankAccount: patient.bankAccount,
+      bankAccounts: JSON.stringify(patient.bankAccounts),
       ageCategory: patient.ageCategory,
       age: patient.age,
       parentsNames: patient.parentsNames,
@@ -84,12 +85,27 @@ export class LocalStoragePatientRepository implements PatientRepository {
     return [];
   }
 
+  private parseBankAccounts(row: PatientRow): BankAccount[] {
+    if (row.bankAccounts) {
+      try {
+        const parsed = JSON.parse(row.bankAccounts);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        /* fall through to legacy */
+      }
+    }
+    if (row.bankAccount) {
+      return [{ bankName: "", alias: "", accountNumber: row.bankAccount }];
+    }
+    return [];
+  }
+
   private toDomain(row: PatientRow): Patient {
     return {
       id: row.id,
       dni: row.dni,
       name: row.name,
-      bankAccount: row.bankAccount,
+      bankAccounts: this.parseBankAccounts(row),
       ageCategory: row.ageCategory as any,
       age: row.age,
       parentsNames: row.parentsNames,

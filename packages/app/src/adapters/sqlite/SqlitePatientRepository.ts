@@ -1,4 +1,4 @@
-import { Patient, PatientRepository, PatientFilters, RegularSchedule } from "@consientemente/core";
+import { Patient, PatientRepository, PatientFilters, RegularSchedule, BankAccount } from "@consientemente/core";
 import * as SQLite from "expo-sqlite";
 import { getDatabase } from "./database";
 
@@ -26,12 +26,12 @@ export class SqlitePatientRepository implements PatientRepository {
     const db = await getDatabase();
     const existing = await this.findById(patient.id);
     const cols = [
-      "id", "dni", "name", "bankAccount", "ageCategory", "age",
+      "id", "dni", "name", "bankAccounts", "ageCategory", "age",
       "parentsNames", "regularSchedules", "paymentFrequency",
       "paymentAmount", "notes", "isActive", "createdAt", "updatedAt",
     ];
     const vals = [
-      patient.id, patient.dni, patient.name, patient.bankAccount,
+      patient.id, patient.dni, patient.name, JSON.stringify(patient.bankAccounts),
       patient.ageCategory, patient.age, patient.parentsNames,
       JSON.stringify(patient.regularSchedules),
       patient.paymentFrequency, patient.paymentAmount, patient.notes,
@@ -67,12 +67,27 @@ export class SqlitePatientRepository implements PatientRepository {
     return [];
   }
 
+  private parseBankAccounts(row: any): BankAccount[] {
+    if (row.bankAccounts) {
+      try {
+        const parsed = JSON.parse(row.bankAccounts);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        /* fall through to legacy */
+      }
+    }
+    if (row.bankAccount) {
+      return [{ bankName: "", alias: "", accountNumber: row.bankAccount }];
+    }
+    return [];
+  }
+
   private toDomain(row: any): Patient {
     return {
       id: row.id,
       dni: row.dni,
       name: row.name,
-      bankAccount: row.bankAccount,
+      bankAccounts: this.parseBankAccounts(row),
       ageCategory: row.ageCategory,
       age: row.age,
       parentsNames: row.parentsNames,

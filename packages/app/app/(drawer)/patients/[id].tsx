@@ -61,7 +61,15 @@ export default function PatientDetail() {
           </View>
         </View>
         {patient.parentsNames && <Text style={styles.parents}>{t("patient.parentsNames")}: {patient.parentsNames}</Text>}
-        {patient.bankAccount && <Text style={styles.info}>{t("patient.bankAccount")}: {patient.bankAccount}</Text>}
+        {patient.bankAccounts?.length ? (
+          <View style={styles.bankList}>
+            {patient.bankAccounts.map((b: any, i: number) => (
+              <Text key={i} style={styles.info}>
+                {t("patient.bankAccount")}: {b.bankName ? `${b.bankName} · ` : ""}{b.alias ? `${b.alias} · ` : ""}{b.accountNumber}
+              </Text>
+            ))}
+          </View>
+        ) : null}
         {patient.regularSchedules?.length ? (
           <View style={styles.scheduleList}>
             {patient.regularSchedules.map((s: any, i: number) => (
@@ -125,6 +133,7 @@ const styles = StyleSheet.create({
   adultText: { color: colors.textSecondary },
   parents: { fontSize: 13, color: colors.text, marginTop: 8 },
   scheduleList: { marginTop: 2 },
+  bankList: { marginTop: 2 },
   info: { fontSize: 13, color: colors.text, marginTop: 4 },
   notes: { fontSize: 12, color: colors.textSecondary, marginTop: 8, fontStyle: "italic" },
   statsRow: { flexDirection: "row", marginHorizontal: radius.md, gap: 8, marginBottom: 8 },

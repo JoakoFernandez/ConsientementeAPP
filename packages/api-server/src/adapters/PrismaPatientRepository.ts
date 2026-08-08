@@ -42,7 +42,7 @@ export class PrismaPatientRepository implements PatientRepository {
       id: p.id,
       dni: p.dni,
       name: p.name,
-      bankAccount: p.bankAccount,
+      bankAccounts: this.parseBankAccounts(p.bankAccounts),
       ageCategory: p.ageCategory,
       age: p.age,
       parentsNames: p.parentsNames,
@@ -66,11 +66,21 @@ export class PrismaPatientRepository implements PatientRepository {
     }
   }
 
+  private parseBankAccounts(raw: string | null): Patient["bankAccounts"] {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
   private toPrisma(patient: Patient): any {
     return {
       dni: patient.dni,
       name: patient.name,
-      bankAccount: patient.bankAccount,
+      bankAccounts: JSON.stringify(patient.bankAccounts),
       ageCategory: patient.ageCategory,
       age: patient.age,
       parentsNames: patient.parentsNames,

@@ -22,7 +22,7 @@ function createMockRepo(): PatientRepository {
 const validInput = {
   dni: "1234567",
   name: "Juan Pérez",
-  bankAccount: "123-456-789",
+  bankAccounts: [{ bankName: "Banco Nación", alias: "Juan", accountNumber: "123456789" }],
   ageCategory: PatientAgeCategory.ADULT,
   age: 30,
   parentsNames: "María y Pedro",
@@ -42,7 +42,9 @@ describe("RegisterPatient", () => {
     expect(patient.id).toBeDefined();
     expect(patient.dni).toBe("1234567");
     expect(patient.name).toBe("Juan Pérez");
-    expect(patient.bankAccount).toBe("123-456-789");
+    expect(patient.bankAccounts).toEqual([
+      { bankName: "Banco Nación", alias: "Juan", accountNumber: "123456789" },
+    ]);
     expect(patient.ageCategory).toBe(PatientAgeCategory.ADULT);
     expect(patient.age).toBe(30);
     expect(patient.parentsNames).toBe("María y Pedro");

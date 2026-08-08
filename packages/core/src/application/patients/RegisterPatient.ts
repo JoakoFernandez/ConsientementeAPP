@@ -1,4 +1,4 @@
-import { Patient, RegularSchedule } from "../../domain/entities/Patient";
+import { Patient, RegularSchedule, BankAccount } from "../../domain/entities/Patient";
 import { PatientRepository } from "../../domain/ports/PatientRepository";
 import { PatientAgeCategory } from "../../domain/value-objects/PatientAgeCategory";
 import { PaymentFrequency } from "../../domain/value-objects/PaymentFrequency";
@@ -11,7 +11,7 @@ export class RegisterPatient {
       id: crypto.randomUUID(),
       dni: input.dni,
       name: input.name,
-      bankAccount: input.bankAccount,
+      bankAccounts: input.bankAccounts ?? [],
       ageCategory: input.ageCategory,
       age: input.age,
       parentsNames: input.parentsNames,
@@ -31,7 +31,7 @@ export class RegisterPatient {
 export interface RegisterPatientInput {
   dni: string;
   name: string;
-  bankAccount: string;
+  bankAccounts: BankAccount[];
   ageCategory: PatientAgeCategory;
   age: number;
   parentsNames: string;

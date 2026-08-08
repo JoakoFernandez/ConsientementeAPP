@@ -7,11 +7,17 @@ export interface RegularSchedule {
   time: string;
 }
 
+export interface BankAccount {
+  bankName: string;
+  alias: string;
+  accountNumber: string;
+}
+
 export interface Patient {
   id: string;
   dni: string;
   name: string;
-  bankAccount: string;
+  bankAccounts: BankAccount[];
   ageCategory: PatientAgeCategory;
   age: number;
   parentsNames: string;

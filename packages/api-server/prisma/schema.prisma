@@ -44,7 +44,7 @@ model Patient {
   id               String            @id @default(uuid())
   dni              String
   name             String
-  bankAccount      String
+  bankAccounts     String?
   ageCategory      PatientAgeCategory
   age              Int
   parentsNames     String
