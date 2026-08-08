@@ -79,6 +79,13 @@ export const es = {
     markCompleted: "Marcar como Completada",
     markCancelled: "Cancelar Sesión",
     noSessions: "No hay sesiones para esta fecha",
+    time: "Hora",
+    selectPatient: "Seleccioná el paciente",
+    needPatient: "Elegí un paciente",
+    invalidDate: "Ingresá una fecha válida",
+    invalidDuration: "La duración debe ser un número mayor a 0",
+    today: "Hoy",
+    tomorrow: "Mañana",
   },
   payment: {
     title: "Pagos",

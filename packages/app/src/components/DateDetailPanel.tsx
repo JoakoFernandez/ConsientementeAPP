@@ -11,6 +11,7 @@ interface DayPlanPanelProps {
   patients: Patient[];
   holiday?: string | null;
   onAddPatient: (patient: Patient, time?: string) => void;
+  onNewSession: () => void;
   onRemovePatient: (session: Session) => void;
   onToggleStatus: (session: Session, status: SessionStatus) => void;
 }
@@ -21,6 +22,7 @@ export function DateDetailPanel({
   patients,
   holiday,
   onAddPatient,
+  onNewSession,
   onRemovePatient,
   onToggleStatus,
 }: DayPlanPanelProps) {
@@ -73,7 +75,12 @@ export function DateDetailPanel({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.dateTitle}>{formatDate(date)}</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.dateTitle}>{formatDate(date)}</Text>
+        <TouchableOpacity style={styles.newSessionBtn} onPress={onNewSession}>
+          <Text style={styles.newSessionText}>+ {t("session.new")}</Text>
+        </TouchableOpacity>
+      </View>
       {holiday ? (
         <View style={styles.holidayBadge}>
           <Text style={styles.holidayBadgeText}>
@@ -140,7 +147,15 @@ function dateFromTime(date: Date, time: string): Date {
 
 const styles = StyleSheet.create({
   container: { padding: radius.lg, backgroundColor: colors.surfaceMuted, borderRadius: radius.md, margin: 8 },
-  dateTitle: { fontSize: 18, fontWeight: "700", marginBottom: radius.md, color: colors.text },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: radius.md },
+  dateTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
+  newSessionBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  newSessionText: { color: colors.white, fontSize: 13, fontWeight: "700" },
   holidayBadge: {
     backgroundColor: colors.dangerLight,
     borderRadius: radius.sm,

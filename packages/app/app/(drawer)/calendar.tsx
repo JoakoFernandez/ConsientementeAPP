@@ -6,6 +6,7 @@ import { useSessionStore } from "../../src/stores/sessionStore";
 import { usePatientStore } from "../../src/stores/patientStore";
 import { CalendarGrid } from "../../src/components/CalendarGrid";
 import { DateDetailPanel } from "../../src/components/DateDetailPanel";
+import { SessionFormModal } from "../../src/components/SessionFormModal";
 import { t } from "../../src/i18n";
 import { getMonthNames } from "../../src/utils/date";
 import { getHolidaysForRange, getHoliday, getWeekDay } from "../../src/utils/holidays";
@@ -18,6 +19,7 @@ export default function Calendar() {
   const { sessions, loadByRange: loadSessions, schedule, setStatus, remove } = useSessionStore();
   const { patients, load: loadPatients } = usePatientStore();
   const [loading, setLoading] = useState(true);
+  const [showSessionModal, setShowSessionModal] = useState(false);
 
   useEffect(() => {
     loadMonthData();
@@ -95,6 +97,16 @@ export default function Calendar() {
     return d.toDateString() === selectedDate.toDateString();
   });
 
+  async function createSession(input: { patientId: string; date: Date; duration: number; notes?: string }) {
+    await schedule({
+      patientId: input.patientId,
+      date: input.date,
+      duration: input.duration,
+      notes: input.notes,
+      status: SessionStatus.WAITING_CONFIRMATION,
+    });
+  }
+
   async function addPatient(patient: Patient, time?: string) {
     const confirm = (confirmed: boolean) => {
       const date = new Date(selectedDate);
@@ -159,10 +171,19 @@ export default function Calendar() {
               patients={patients}
               holiday={selectedHoliday?.name ?? null}
               onAddPatient={addPatient}
+              onNewSession={() => setShowSessionModal(true)}
               onRemovePatient={(s) => remove(s.id)}
               onToggleStatus={(s, status) => setStatus(s.id, status)}
             />
           </ScrollView>
+
+          <SessionFormModal
+            visible={showSessionModal}
+            patients={patients}
+            initialDate={selectedDate}
+            onClose={() => setShowSessionModal(false)}
+            onCreate={createSession}
+          />
         </>
       )}
     </View>

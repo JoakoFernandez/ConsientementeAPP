@@ -79,6 +79,13 @@ export const en = {
     markCompleted: "Mark as Completed",
     markCancelled: "Cancel Session",
     noSessions: "No sessions for this date",
+    time: "Time",
+    selectPatient: "Select the patient",
+    needPatient: "Choose a patient",
+    invalidDate: "Enter a valid date",
+    invalidDuration: "Duration must be a number greater than 0",
+    today: "Today",
+    tomorrow: "Tomorrow",
   },
   payment: {
     title: "Payments",

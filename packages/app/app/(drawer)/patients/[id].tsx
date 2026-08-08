@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePatientStore } from "../../../src/stores/patientStore";
 import { useSessionStore } from "../../../src/stores/sessionStore";
 import { usePaymentStore } from "../../../src/stores/paymentStore";
+import { SessionFormModal } from "../../../src/components/SessionFormModal";
 import { formatCurrency, getFrequencyLabel, getStatusColor, getWeekDayLabel } from "../../../src/utils/formatters";
 import { formatDate, formatTime } from "../../../src/utils/date";
 import { t } from "../../../src/i18n";
@@ -13,10 +14,11 @@ export default function PatientDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { getById } = usePatientStore();
-  const { sessions, loadByPatient: loadSessions } = useSessionStore();
+  const { sessions, loadByPatient: loadSessions, schedule } = useSessionStore();
   const { payments, loadByPatient: loadPayments } = usePaymentStore();
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showSessionModal, setShowSessionModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -30,6 +32,17 @@ export default function PatientDetail() {
     setLoading(false);
   }
 
+  async function createSession(input: { patientId: string; date: Date; duration: number; notes?: string }) {
+    await schedule({
+      patientId: input.patientId,
+      date: input.date,
+      duration: input.duration,
+      notes: input.notes,
+      status: "WAITING_CONFIRMATION" as any,
+    });
+    await loadSessions(id);
+  }
+
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>;
   }
@@ -41,16 +54,25 @@ export default function PatientDetail() {
   const totalPending = payments.filter((p) => p.status === "PENDING").reduce((s, p) => s + p.amount, 0);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={styles.headerCard}>
         <View style={styles.headerRow}>
           <Text style={styles.name}>{patient.name}</Text>
-          <TouchableOpacity
-            style={styles.editBtn}
-            onPress={() => router.push(`/(drawer)/patients/edit?id=${patient.id}`)}
-          >
-            <Text style={styles.editBtnText}>{t("patient.edit")}</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.newSessionBtn}
+              onPress={() => setShowSessionModal(true)}
+            >
+              <Text style={styles.newSessionBtnText}>+ {t("session.new")}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.editBtn}
+              onPress={() => router.push(`/(drawer)/patients/edit?id=${patient.id}`)}
+            >
+              <Text style={styles.editBtnText}>{t("patient.edit")}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={styles.dni}>{t("patient.dni")}: {patient.dni}</Text>
         <View style={styles.badgeRow}>
@@ -110,7 +132,17 @@ export default function PatientDetail() {
           <Text style={styles.itemDetail}>{getFrequencyLabel(p.frequency)}</Text>
         </View>
       ))}
-    </ScrollView>
+      </ScrollView>
+
+      <SessionFormModal
+        visible={showSessionModal}
+        patients={[patient]}
+        selectedPatient={patient}
+        initialDate={new Date()}
+        onClose={() => setShowSessionModal(false)}
+        onCreate={createSession}
+      />
+    </>
   );
 }
 
@@ -121,6 +153,9 @@ const styles = StyleSheet.create({
   headerCard: { backgroundColor: colors.surface, margin: radius.md, borderRadius: radius.md, padding: radius.lg, ...cardShadow },
   name: { fontSize: 20, fontWeight: "700", color: colors.text },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  headerActions: { flexDirection: "row", gap: 6, alignItems: "center" },
+  newSessionBtn: { backgroundColor: colors.primary, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 },
+  newSessionBtnText: { color: colors.white, fontSize: 12, fontWeight: "700" },
   editBtn: { backgroundColor: colors.primaryLight, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 },
   editBtnText: { color: colors.primaryDark, fontSize: 12, fontWeight: "700" },
   dni: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },

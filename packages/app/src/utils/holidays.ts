@@ -14,15 +14,12 @@ interface HolidaySpec {
 
 const FIXED_HOLIDAYS: HolidaySpec[] = [
   { month: 0, day: 1, names: { es: "Año Nuevo", en: "New Year's Day", it: "Capodanno" } },
-  { month: 2, day: 24, names: { es: "Día de la Memoria por la Verdad y la Justicia", en: "Day of Remembrance for Truth and Justice", it: "Giorno della Memoria per la Verità e la Giustizia" } },
-  { month: 3, day: 2, names: { es: "Día del Veterano y de los Caídos en Malvinas", en: "Malvinas Veterans Day", it: "Giornata dei Veterani delle Malvinas" } },
-  { month: 4, day: 1, names: { es: "Día del Trabajador", en: "Labour Day", it: "Festa del Lavoro" } },
-  { month: 4, day: 25, names: { es: "Día de la Revolución de Mayo", en: "May Revolution Day", it: "Rivoluzione di Maggio" } },
-  { month: 5, day: 20, names: { es: "Día de la Bandera", en: "Flag Day", it: "Giorno della Bandiera" } },
-  { month: 6, day: 9, names: { es: "Día de la Independencia", en: "Independence Day", it: "Giorno dell'Indipendenza" } },
-  { month: 9, day: 12, names: { es: "Día del Respeto a la Diversidad Cultural", en: "Day of Respect for Cultural Diversity", it: "Giorno del Rispetto per la Diversità Culturale" } },
-  { month: 10, day: 20, names: { es: "Día de la Soberanía Nacional", en: "National Sovereignty Day", it: "Giorno della Sovranità Nazionale" } },
-  { month: 11, day: 8, names: { es: "Día de la Inmaculada Concepción", en: "Immaculate Conception", it: "Immacolata Concezione" } },
+  { month: 1, day: 1, names: { es: "Día de los Héroes", en: "Heroes' Day", it: "Giorno degli Eroi" } },
+  { month: 2, day: 1, names: { es: "Día del Trabajador", en: "Labour Day", it: "Festa del Lavoro" } },
+  { month: 4, day: 14, names: { es: "Día de la Independencia Nacional", en: "National Independence Day", it: "Festa dell'Indipendenza" } },
+  { month: 5, day: 12, names: { es: "Día de la Paz del Chaco", en: "Chaco Peace Day", it: "Giorno della Pace del Chaco" } },
+  { month: 7, day: 15, names: { es: "Fundación de Asunción", en: "Asunción Founding Day", it: "Fondazione di Asunción" } },
+  { month: 11, day: 8, names: { es: "Día de la Virgen de Caacupé", en: "Virgin of Caacupé Day", it: "Vergine di Caacupé" } },
   { month: 11, day: 25, names: { es: "Navidad", en: "Christmas Day", it: "Natale" } },
 ];
 

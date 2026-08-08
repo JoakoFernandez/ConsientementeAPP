@@ -3,18 +3,18 @@
 ## Features
 
 - **Dashboard:** today's sessions, pending payments, collected today, and quick actions
-- **Calendar (day plan):** each day is a button; selecting a day shows the **patients of the day** — regular-schedule patients for that weekday plus any added ones. Each patient on a day has two confirmation statuses: **waiting for confirmation** / **confirmed**. You can add any patient to any day, remove them, and toggle their status
-- **Holidays:** the calendar marks public holidays (Argentina, including moveable ones via Easter computation) and warns before adding a patient on a holiday; weekends are also shown
-- **Patients:** register, search, view and edit patient records (DNI, age category, **multiple regular schedules** — weekday + time, payment plan, and **multiple bank accounts** with bank name, alias, and account number)
+- **Calendar (day plan):** each day is a button; selecting a day shows the **patients of the day** — regular-schedule patients for that weekday plus any added ones. Each patient on a day has two confirmation statuses: **waiting for confirmation** / **confirmed**. You can add any patient to any day, remove them, and toggle their status. A **"+ New Session"** button on the selected day opens a form to schedule a session (patient, date, time, duration, notes) for any date
+- **Holidays:** the calendar marks public holidays (Paraguay, including moveable ones via Easter computation) and warns before adding a patient on a holiday; weekends are also shown
+- **Patients:** register, search, view and edit patient records (DNI, age category, **multiple regular schedules** — weekday + time, payment plan, and **multiple bank accounts** with bank name, alias, and account number). From a patient's detail screen you can schedule a new session for that patient (date, time, duration) which then shows on the calendar
 - **Payments:** register payments, filter by today/week/month, mark pending as paid, overdue detection
 - **Reports:** weekly/monthly summaries with CSV export
-- **Settings:** language (`Español (AR)` / `English` / `Italiano`), currency (Guaraníes Gs. / Dólares $), practice data editor, sync status
+- **Settings:** language (`Español (PY)` / `English` / `Italiano`), currency (Guaraníes Gs. / Dólares $), practice data editor, sync status
 - **Help:** built-in FAQ screen (translated per language)
 - **First-run setup:** on first open the app asks for the practice name and professional's name before showing the dashboard
 - **Strict validation:** DNI and account numbers accept digits only, age must be 0–120, amounts must be numeric, and schedule times must follow `HH:MM` (e.g. `09:30`)
 - **Navigation:** the dashboard offers action buttons to jump to any section (patients, calendar, payments, reports)
 - **Theme:** warm pastel executive palette (`src/theme.ts`), aimed at non-technical users
-- **i18n:** three languages — Spanish (Argentina, rioplatense/voseo), English, and Italian (`src/i18n/`); language switch applies instantly and is kept in memory
+- **i18n:** three languages — Spanish (Paraguay, voseo), English, and Italian (`src/i18n/`); language switch applies instantly and is kept in memory
 
 ## Tech Stack
 
