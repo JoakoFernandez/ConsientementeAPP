@@ -27,6 +27,7 @@ async function migrateDatabase(database: SQLite.SQLiteDatabase): Promise<void> {
   await ensureColumn(database, "patients", "regularSchedules", "TEXT");
   await ensureColumn(database, "patients", "regularWeekDay", "TEXT");
   await ensureColumn(database, "patients", "regularTime", "TEXT");
+  await ensureColumn(database, "payments", "invoiceStatus", "TEXT DEFAULT 'PENDING'");
 }
 
 async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void> {
@@ -70,6 +71,7 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void
       date TEXT NOT NULL,
       frequency TEXT NOT NULL,
       status TEXT DEFAULT 'PENDING',
+      invoiceStatus TEXT DEFAULT 'PENDING',
       notes TEXT DEFAULT '',
       periodStart TEXT,
       periodEnd TEXT,

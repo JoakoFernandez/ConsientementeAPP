@@ -10,6 +10,7 @@ interface PaymentRow {
   date: string;
   frequency: string;
   status: string;
+  invoiceStatus?: string;
   notes: string;
   periodStart: string | null;
   periodEnd: string | null;
@@ -69,6 +70,7 @@ export class LocalStoragePaymentRepository implements PaymentRepository {
       date: payment.date.toISOString(),
       frequency: payment.frequency,
       status: payment.status,
+      invoiceStatus: payment.invoiceStatus,
       notes: payment.notes,
       periodStart: payment.periodStart ? payment.periodStart.toISOString() : null,
       periodEnd: payment.periodEnd ? payment.periodEnd.toISOString() : null,
@@ -93,6 +95,7 @@ export class LocalStoragePaymentRepository implements PaymentRepository {
       date: new Date(row.date),
       frequency: row.frequency as any,
       status: row.status as any,
+      invoiceStatus: (row.invoiceStatus ?? "PENDING") as any,
       notes: row.notes,
       periodStart: row.periodStart ? new Date(row.periodStart) : null,
       periodEnd: row.periodEnd ? new Date(row.periodEnd) : null,

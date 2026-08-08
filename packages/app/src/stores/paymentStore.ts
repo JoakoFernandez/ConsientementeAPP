@@ -1,8 +1,9 @@
 import { create } from "zustand";
-import { Payment } from "@consientemente/core";
+import { Payment, InvoiceStatus } from "@consientemente/core";
 import {
   RegisterPayment,
   MarkPaymentAsPaid,
+  SetPaymentInvoiceStatus,
   GetPaymentsByDateRange,
   GetPatientPayments,
 } from "@consientemente/core";
@@ -11,6 +12,7 @@ import { createPaymentRepository } from "../adapters/repositoryFactory";
 const repo = createPaymentRepository();
 const registerUseCase = new RegisterPayment(repo);
 const markPaidUseCase = new MarkPaymentAsPaid(repo);
+const setInvoiceStatusUseCase = new SetPaymentInvoiceStatus(repo);
 
 interface PaymentState {
   payments: Payment[];
@@ -21,6 +23,7 @@ interface PaymentState {
   loadPending: () => Promise<void>;
   register: (input: Parameters<typeof registerUseCase.execute>[0]) => Promise<Payment>;
   markPaid: (id: string) => Promise<void>;
+  setInvoiceStatus: (id: string, invoiceStatus: InvoiceStatus) => Promise<void>;
 }
 
 export const usePaymentStore = create<PaymentState>((set) => ({
@@ -56,6 +59,14 @@ export const usePaymentStore = create<PaymentState>((set) => ({
     set((state) => ({
       payments: state.payments.map((p) =>
         p.id === id ? { ...p, status: "PAID" as any, paidAt: new Date(), updatedAt: new Date() } : p
+      ),
+    }));
+  },
+  setInvoiceStatus: async (id: string, invoiceStatus: InvoiceStatus) => {
+    await setInvoiceStatusUseCase.execute(id, invoiceStatus);
+    set((state) => ({
+      payments: state.payments.map((p) =>
+        p.id === id ? { ...p, invoiceStatus, updatedAt: new Date() } : p
       ),
     }));
   },

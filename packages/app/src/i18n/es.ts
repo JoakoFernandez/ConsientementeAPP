@@ -108,6 +108,11 @@ export const es = {
     collected: "Cobrado",
     pay: "Pagar",
     selectPatientAmount: "Seleccioná un paciente e ingresá el monto",
+    invoiceStatus: "Estado de Factura",
+    invoiceIssued: "Factura Emitida",
+    invoicePending: "Factura Pendiente",
+    markInvoiceIssued: "Marcar Factura Emitida",
+    markInvoicePending: "Marcar Factura Pendiente",
   },
   calendar: {
     today: "Hoy",

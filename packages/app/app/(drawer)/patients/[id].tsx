@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { usePatientStore } from "../../../src/stores/patientStore";
 import { useSessionStore } from "../../../src/stores/sessionStore";
 import { usePaymentStore } from "../../../src/stores/paymentStore";
 import { SessionFormModal } from "../../../src/components/SessionFormModal";
-import { formatCurrency, getFrequencyLabel, getStatusColor, getStatusLabel, getWeekDayLabel } from "../../../src/utils/formatters";
+import { formatCurrency, getFrequencyLabel, getStatusColor, getStatusLabel, getInvoiceLabel, getWeekDayLabel } from "../../../src/utils/formatters";
 import { formatDate, formatTime } from "../../../src/utils/date";
 import { t } from "../../../src/i18n";
 import { colors, radius, cardShadow } from "../../../src/theme";
@@ -21,9 +21,11 @@ export default function PatientDetail() {
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [sessionFilter, setSessionFilter] = useState<"all" | "upcoming" | "past">("all");
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [id])
+  );
 
   async function loadData() {
     if (!id) return;
@@ -160,7 +162,9 @@ export default function PatientDetail() {
             <Text style={styles.itemDate}>{formatDate(new Date(p.date))} - {formatCurrency(p.amount)}</Text>
             <View style={[styles.statusDot, { backgroundColor: getStatusColor(p.status) }]} />
           </View>
-          <Text style={styles.itemDetail}>{getFrequencyLabel(p.frequency)}</Text>
+          <Text style={styles.itemDetail}>
+            {getFrequencyLabel(p.frequency)} · {getInvoiceLabel(p.invoiceStatus)}
+          </Text>
         </View>
       ))}
       </ScrollView>

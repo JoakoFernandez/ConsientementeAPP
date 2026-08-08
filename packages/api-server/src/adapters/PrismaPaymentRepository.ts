@@ -76,6 +76,7 @@ export class PrismaPaymentRepository implements PaymentRepository {
       date: payment.date,
       frequency: payment.frequency,
       status: payment.status,
+      invoiceStatus: payment.invoiceStatus,
       notes: payment.notes,
       periodStart: payment.periodStart,
       periodEnd: payment.periodEnd,

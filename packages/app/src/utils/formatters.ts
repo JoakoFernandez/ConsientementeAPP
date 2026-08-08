@@ -59,3 +59,11 @@ export function getStatusLabel(status: string): string {
   };
   return labels[status] || status;
 }
+
+export function getInvoiceColor(invoiceStatus: string): string {
+  return invoiceStatus === "ISSUED" ? colors.success : colors.warning;
+}
+
+export function getInvoiceLabel(invoiceStatus: string): string {
+  return invoiceStatus === "ISSUED" ? t("payment.invoiceIssued") : t("payment.invoicePending");
+}

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { usePaymentStore } from "../../../src/stores/paymentStore";
 import { usePatientStore } from "../../../src/stores/patientStore";
-import { PaymentFrequency } from "@consientemente/core";
-import { formatCurrency, getStatusColor, currencySymbol } from "../../../src/utils/formatters";
+import { PaymentFrequency, InvoiceStatus } from "@consientemente/core";
+import { formatCurrency, getStatusColor, getInvoiceColor, currencySymbol } from "../../../src/utils/formatters";
 import { formatDate } from "../../../src/utils/date";
 import { t } from "../../../src/i18n";
 import { showAlert } from "../../../src/utils/alert";
@@ -12,13 +12,14 @@ import { colors, radius, cardShadow } from "../../../src/theme";
 type Period = "daily" | "weekly" | "monthly";
 
 export default function Payments() {
-  const { payments, loading, loadByRange, register, markPaid } = usePaymentStore();
+  const { payments, loading, loadByRange, register, markPaid, setInvoiceStatus } = usePaymentStore();
   const { patients, load: loadPatients } = usePatientStore();
   const [period, setPeriod] = useState<Period>("daily");
   const [showNewForm, setShowNewForm] = useState(false);
   const [newAmount, setNewAmount] = useState("");
   const [newPatientId, setNewPatientId] = useState("");
   const [newFrequency, setNewFrequency] = useState(PaymentFrequency.PER_SESSION);
+  const [newInvoiceStatus, setNewInvoiceStatus] = useState(InvoiceStatus.PENDING);
 
   useEffect(() => {
     loadPaymentsForPeriod();
@@ -64,8 +65,10 @@ export default function Payments() {
       amount: parseFloat(newAmount),
       date: new Date(),
       frequency: newFrequency,
+      invoiceStatus: newInvoiceStatus,
     });
     setNewAmount("");
+    setNewInvoiceStatus(InvoiceStatus.PENDING);
     setShowNewForm(false);
     loadPaymentsForPeriod();
   }
@@ -124,6 +127,19 @@ export default function Payments() {
               </TouchableOpacity>
             ))}
           </View>
+          <Text style={styles.invoiceLabel}>{t("payment.invoiceStatus")}</Text>
+          <View style={styles.invoiceRow}>
+            {[InvoiceStatus.PENDING, InvoiceStatus.ISSUED].map((inv) => (
+              <TouchableOpacity
+                key={inv} style={[styles.invoiceChip, newInvoiceStatus === inv && styles.invoiceChipActive]}
+                onPress={() => setNewInvoiceStatus(inv)}
+              >
+                <Text style={[styles.chipText, newInvoiceStatus === inv && styles.chipTextActive]}>
+                  {inv === InvoiceStatus.ISSUED ? t("payment.invoiceIssued") : t("payment.invoicePending")}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <View style={styles.amountRow}>
             <Text style={styles.currencyLabel}>{currencySymbol()}</Text>
             <View style={{ flex: 1, marginLeft: 8 }}>
@@ -161,6 +177,23 @@ export default function Payments() {
               </View>
               <Text style={styles.paymentAmount}>{formatCurrency(item.amount)}</Text>
               <Text style={styles.paymentDate}>{formatDate(new Date(item.date))}</Text>
+              <View style={styles.invoiceLine}>
+                <View style={[styles.invoiceBadge, { backgroundColor: getInvoiceColor(item.invoiceStatus) }]}>
+                  <Text style={styles.statusText}>
+                    {item.invoiceStatus === "ISSUED" ? t("payment.invoiceIssued") : t("payment.invoicePending")}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.invoiceToggleBtn}
+                  onPress={() =>
+                    setInvoiceStatus(item.id, item.invoiceStatus === "ISSUED" ? InvoiceStatus.PENDING : InvoiceStatus.ISSUED)
+                  }
+                >
+                  <Text style={styles.invoiceToggleText}>
+                    {item.invoiceStatus === "ISSUED" ? t("payment.markInvoicePending") : t("payment.markInvoiceIssued")}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               {item.status === "PENDING" && (
                 <TouchableOpacity style={styles.payBtn} onPress={() => handleMarkPaid(item.id)}>
                   <Text style={styles.payBtnText}>{t("payment.markPaid")}</Text>
@@ -196,6 +229,10 @@ const styles = StyleSheet.create({
   chipTextActive: { color: colors.white },
   freqRow: { flexDirection: "row", gap: 6, marginBottom: radius.md },
   freqChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: colors.surfaceMuted },
+  invoiceLabel: { fontSize: 12, fontWeight: "600", color: colors.textSecondary, marginBottom: 4 },
+  invoiceRow: { flexDirection: "row", gap: 6, marginBottom: radius.md },
+  invoiceChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: colors.surfaceMuted },
+  invoiceChipActive: { backgroundColor: colors.primary },
   amountRow: { flexDirection: "row", alignItems: "center" },
   currencyLabel: { fontSize: 18, fontWeight: "700", color: colors.text },
   amountInput: { backgroundColor: colors.surfaceSoft, borderRadius: radius.sm, paddingHorizontal: radius.md, paddingVertical: 8, fontSize: 16, borderWidth: 1, borderColor: colors.border, color: colors.text },
@@ -209,6 +246,10 @@ const styles = StyleSheet.create({
   statusText: { color: colors.white, fontSize: 11, fontWeight: "600" },
   paymentAmount: { fontSize: 20, fontWeight: "700", color: colors.text, marginTop: 4 },
   paymentDate: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  invoiceLine: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
+  invoiceBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6 },
+  invoiceToggleBtn: { paddingVertical: 4, paddingHorizontal: 8 },
+  invoiceToggleText: { color: colors.primaryDark, fontSize: 12, fontWeight: "700" },
   payBtn: { marginTop: 8, backgroundColor: colors.success, borderRadius: 6, paddingVertical: 8, alignItems: "center" },
   payBtnText: { color: colors.white, fontWeight: "600", fontSize: 13 },
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { RegisterPayment } from "../payments/RegisterPayment";
 import { MarkPaymentAsPaid } from "../payments/MarkPaymentAsPaid";
+import { SetPaymentInvoiceStatus } from "../payments/SetPaymentInvoiceStatus";
 import { GetPaymentsByDateRange } from "../payments/GetPaymentsByDateRange";
 import { GetPatientPayments } from "../payments/GetPatientPayments";
 import { ExportToCSV } from "../payments/ExportToCSV";
@@ -10,6 +11,7 @@ import { PaymentRepository } from "../../domain/ports/PaymentRepository";
 import { SessionRepository } from "../../domain/ports/SessionRepository";
 import { PaymentFrequency } from "../../domain/value-objects/PaymentFrequency";
 import { PaymentStatus } from "../../domain/value-objects/PaymentStatus";
+import { InvoiceStatus } from "../../domain/value-objects/InvoiceStatus";
 import { SessionStatus } from "../../domain/value-objects/SessionStatus";
 
 function createMockPaymentRepo(): PaymentRepository {
@@ -98,7 +100,7 @@ describe("MarkPaymentAsPaid", () => {
       amount: 100000,
       date: new Date(),
       frequency: PaymentFrequency.PER_SESSION,
-      status: PaymentStatus.PENDING,
+      status: PaymentStatus.PENDING, invoiceStatus: InvoiceStatus.PENDING,
       notes: "",
       periodStart: null,
       periodEnd: null,
@@ -122,14 +124,49 @@ describe("MarkPaymentAsPaid", () => {
   });
 });
 
+describe("SetPaymentInvoiceStatus", () => {
+  it("marks a payment invoice as issued", async () => {
+    const repo = createMockPaymentRepo();
+    const setInvoice = new SetPaymentInvoiceStatus(repo);
+
+    const payment: Payment = {
+      id: "inv-1",
+      patientId: "p1",
+      amount: 100000,
+      date: new Date(),
+      frequency: PaymentFrequency.PER_SESSION,
+      status: PaymentStatus.PAID,
+      invoiceStatus: InvoiceStatus.PENDING,
+      notes: "",
+      periodStart: null,
+      periodEnd: null,
+      paidAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await repo.save(payment);
+    await setInvoice.execute("inv-1", InvoiceStatus.ISSUED);
+
+    const updated = await repo.findById("inv-1");
+    expect(updated!.invoiceStatus).toBe(InvoiceStatus.ISSUED);
+  });
+
+  it("throws when payment not found", async () => {
+    const repo = createMockPaymentRepo();
+    const setInvoice = new SetPaymentInvoiceStatus(repo);
+
+    await expect(setInvoice.execute("nonexistent", InvoiceStatus.ISSUED)).rejects.toThrow("Payment not found");
+  });
+});
+
 describe("GetPaymentsByDateRange", () => {
   it("filters payments by date range", async () => {
     const repo = createMockPaymentRepo();
     const useCase = new GetPaymentsByDateRange(repo);
 
-    const p1: Payment = { id: "1", patientId: "p1", amount: 50000, date: new Date("2026-07-01"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
-    const p2: Payment = { id: "2", patientId: "p1", amount: 50000, date: new Date("2026-07-15"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
-    const p3: Payment = { id: "3", patientId: "p2", amount: 50000, date: new Date("2026-08-01"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
+    const p1: Payment = { id: "1", patientId: "p1", amount: 50000, date: new Date("2026-07-01"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, invoiceStatus: InvoiceStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
+    const p2: Payment = { id: "2", patientId: "p1", amount: 50000, date: new Date("2026-07-15"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, invoiceStatus: InvoiceStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
+    const p3: Payment = { id: "3", patientId: "p2", amount: 50000, date: new Date("2026-08-01"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, invoiceStatus: InvoiceStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
     await repo.save(p1);
     await repo.save(p2);
     await repo.save(p3);
@@ -144,8 +181,8 @@ describe("GetPatientPayments", () => {
     const repo = createMockPaymentRepo();
     const useCase = new GetPatientPayments(repo);
 
-    const p1: Payment = { id: "1", patientId: "p1", amount: 50000, date: new Date(), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
-    const p2: Payment = { id: "2", patientId: "p2", amount: 50000, date: new Date(), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
+    const p1: Payment = { id: "1", patientId: "p1", amount: 50000, date: new Date(), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, invoiceStatus: InvoiceStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
+    const p2: Payment = { id: "2", patientId: "p2", amount: 50000, date: new Date(), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, invoiceStatus: InvoiceStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
     await repo.save(p1);
     await repo.save(p2);
 
@@ -163,7 +200,7 @@ describe("ExportToCSV", () => {
     const csv = await useCase.execute({});
     const lines = csv.trim().split("\n");
 
-    expect(lines[0]).toBe("ID,PatientID,Amount,Date,Frequency,Status,Notes,PeriodStart,PeriodEnd,PaidAt");
+    expect(lines[0]).toBe("ID,PatientID,Amount,Date,Frequency,Status,InvoiceStatus,Notes,PeriodStart,PeriodEnd,PaidAt");
   });
 
   it("includes payment data in CSV", async () => {
@@ -178,7 +215,7 @@ describe("ExportToCSV", () => {
       amount: 100000,
       date: yesterday,
       frequency: PaymentFrequency.PER_SESSION,
-      status: PaymentStatus.PAID,
+      status: PaymentStatus.PAID, invoiceStatus: InvoiceStatus.PENDING,
       notes: "Pago normal",
       periodStart: null,
       periodEnd: null,
@@ -202,8 +239,8 @@ describe("ExportToCSV", () => {
     const repo = createMockPaymentRepo();
     const useCase = new ExportToCSV(repo);
 
-    const p1: Payment = { id: "1", patientId: "p1", amount: 50000, date: new Date("2026-07-01"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
-    const p2: Payment = { id: "2", patientId: "p1", amount: 50000, date: new Date("2026-08-01"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
+    const p1: Payment = { id: "1", patientId: "p1", amount: 50000, date: new Date("2026-07-01"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, invoiceStatus: InvoiceStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
+    const p2: Payment = { id: "2", patientId: "p1", amount: 50000, date: new Date("2026-08-01"), frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, invoiceStatus: InvoiceStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
     await repo.save(p1);
     await repo.save(p2);
 
@@ -229,11 +266,11 @@ describe("GetDashboardData", () => {
     ]);
 
     vi.mocked(paymentRepo.findPending).mockResolvedValue([
-      { id: "pay1", patientId: "p1", amount: 100000, date: today, frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: null, createdAt: new Date(), updatedAt: new Date() },
+      { id: "pay1", patientId: "p1", amount: 100000, date: today, frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PENDING, invoiceStatus: InvoiceStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: null, createdAt: new Date(), updatedAt: new Date() },
     ]);
 
     vi.mocked(paymentRepo.findByDateRange).mockResolvedValue([
-      { id: "pay2", patientId: "p1", amount: 50000, date: today, frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() },
+      { id: "pay2", patientId: "p1", amount: 50000, date: today, frequency: PaymentFrequency.PER_SESSION, status: PaymentStatus.PAID, invoiceStatus: InvoiceStatus.PENDING, notes: "", periodStart: null, periodEnd: null, paidAt: new Date(), createdAt: new Date(), updatedAt: new Date() },
     ]);
 
     const useCase = new GetDashboardData(paymentRepo, sessionRepo);

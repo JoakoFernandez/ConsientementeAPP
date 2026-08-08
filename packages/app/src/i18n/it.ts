@@ -108,6 +108,11 @@ export const it = {
     collected: "Incassato",
     pay: "Paga",
     selectPatientAmount: "Seleziona un paziente e inserisci l'importo",
+    invoiceStatus: "Stato Fattura",
+    invoiceIssued: "Fattura Emessa",
+    invoicePending: "Fattura in Sospeso",
+    markInvoiceIssued: "Segna Fattura Emessa",
+    markInvoicePending: "Segna Fattura in Sospeso",
   },
   calendar: {
     today: "Oggi",

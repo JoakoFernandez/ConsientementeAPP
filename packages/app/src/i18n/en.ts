@@ -108,6 +108,11 @@ export const en = {
     collected: "Collected",
     pay: "Pay",
     selectPatientAmount: "Select a patient and enter the amount",
+    invoiceStatus: "Invoice Status",
+    invoiceIssued: "Invoice Issued",
+    invoicePending: "Invoice Pending",
+    markInvoiceIssued: "Mark Invoice Issued",
+    markInvoicePending: "Mark Invoice Pending",
   },
   calendar: {
     today: "Today",

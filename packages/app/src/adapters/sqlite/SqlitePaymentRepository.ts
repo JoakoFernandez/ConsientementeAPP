@@ -43,10 +43,10 @@ export class SqlitePaymentRepository implements PaymentRepository {
   async save(payment: Payment): Promise<void> {
     const db = await getDatabase();
     const existing = await this.findById(payment.id);
-    const cols = ["id","patientId","amount","date","frequency","status","notes",
+    const cols = ["id","patientId","amount","date","frequency","status","invoiceStatus","notes",
       "periodStart","periodEnd","paidAt","createdAt","updatedAt"];
     const vals = [payment.id, payment.patientId, payment.amount, payment.date.toISOString(),
-      payment.frequency, payment.status, payment.notes,
+      payment.frequency, payment.status, payment.invoiceStatus, payment.notes,
       payment.periodStart?.toISOString() ?? null,
       payment.periodEnd?.toISOString() ?? null,
       payment.paidAt?.toISOString() ?? null,
@@ -73,6 +73,7 @@ export class SqlitePaymentRepository implements PaymentRepository {
       date: new Date(row.date),
       frequency: row.frequency,
       status: row.status,
+      invoiceStatus: (row.invoiceStatus ?? "PENDING") as any,
       notes: row.notes,
       periodStart: row.periodStart ? new Date(row.periodStart) : null,
       periodEnd: row.periodEnd ? new Date(row.periodEnd) : null,

@@ -1,6 +1,7 @@
 export { RegisterPayment } from "./RegisterPayment";
 export type { RegisterPaymentInput } from "./RegisterPayment";
 export { MarkPaymentAsPaid } from "./MarkPaymentAsPaid";
+export { SetPaymentInvoiceStatus } from "./SetPaymentInvoiceStatus";
 export { GetPaymentsByDateRange } from "./GetPaymentsByDateRange";
 export { GetPatientPayments } from "./GetPatientPayments";
 export { GetDashboardData } from "./GetDashboardData";
