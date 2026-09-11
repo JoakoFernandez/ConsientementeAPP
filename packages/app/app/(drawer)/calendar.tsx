@@ -43,9 +43,7 @@ export default function Calendar() {
   const selectedHoliday = getHoliday(selectedDate);
 
   async function ensureScheduleSessions() {
-    // Auto-materialize a session for each active patient whose regular schedule
-    // falls on the selected weekday, so schedule-based patients appear as part of
-    // "patients of the day". Skipped on holidays (user adds them manually with a warning).
+    try {
     if (selectedHoliday) return;
     const dayWeekDay = getWeekDay(selectedDate);
     const daySessions = sessions.filter(
@@ -79,6 +77,9 @@ export default function Calendar() {
         status: SessionStatus.WAITING_CONFIRMATION,
       });
     }
+    } catch (e) {
+      console.error("ensureScheduleSessions error:", e);
+    }
   }
 
   useEffect(() => {
@@ -87,15 +88,21 @@ export default function Calendar() {
     ensureScheduleSessions();
   }, [selectedDate]);
 
-  const monthSessionDates = sessions.map((s) => new Date(s.date).toISOString().split("T")[0]);
+  const monthSessionDates = sessions
+    .map((s) => {
+      try { return new Date(s.date).toISOString().split("T")[0]; } catch { return null; }
+    })
+    .filter(Boolean) as string[];
   const holidays = getHolidaysForRange(
     new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1),
     new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
   );
 
   const selectedDateSessions = sessions.filter((s) => {
-    const d = new Date(s.date);
-    return d.toDateString() === selectedDate.toDateString();
+    try {
+      const d = new Date(s.date);
+      return d.toDateString() === selectedDate.toDateString();
+    } catch { return false; }
   });
 
   async function createSession(input: { patientId: string; date: Date; duration: number; notes?: string }) {

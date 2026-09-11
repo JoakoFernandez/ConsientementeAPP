@@ -47,11 +47,23 @@ export function isSameMonth(date: Date, month: Date): boolean {
 }
 
 export function formatDate(date: Date): string {
-  return date.toLocaleDateString(getLocale(), { year: "numeric", month: "long", day: "numeric" });
+  if (!date || Number.isNaN(date.getTime())) return "--";
+  try {
+    return date.toLocaleDateString(getLocale(), { year: "numeric", month: "long", day: "numeric" });
+  } catch {
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  }
 }
 
 export function formatTime(date: Date): string {
-  return date.toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" });
+  if (!date || Number.isNaN(date.getTime())) return "--:--";
+  try {
+    return date.toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    const h = String(date.getHours()).padStart(2, "0");
+    const m = String(date.getMinutes()).padStart(2, "0");
+    return `${h}:${m}`;
+  }
 }
 
 export function getWeekRange(date: Date): { from: Date; to: Date } {

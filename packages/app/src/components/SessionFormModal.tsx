@@ -21,7 +21,7 @@ interface SessionFormModalProps {
   onCreate: (input: SessionFormInput) => Promise<void>;
 }
 
-const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
+const TIME_RE = /^([01]?\d|2[0-3]):([0-5]\d)$/;
 
 function toDateText(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -110,6 +110,8 @@ export function SessionFormModal({
     try {
       await onCreate({ patientId: pId, date: numDate, duration: dur, notes });
       close();
+    } catch (e: any) {
+      showAlert(t("common.error"), e?.message || String(e));
     } finally {
       setSaving(false);
     }
