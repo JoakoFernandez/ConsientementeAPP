@@ -169,6 +169,7 @@ export const en = {
     syncStatus: "Sync Status",
     lastSync: "Last Sync",
     syncNow: "Sync Now",
+    never: "Never",
     currency: "Currency",
     about: "About",
     version: "Version",

@@ -169,6 +169,7 @@ export const es = {
     syncStatus: "Estado de Sincronización",
     lastSync: "Última Sincronización",
     syncNow: "Sincronizar Ahora",
+    never: "Nunca",
     currency: "Moneda",
     about: "Acerca de",
     version: "Versión",

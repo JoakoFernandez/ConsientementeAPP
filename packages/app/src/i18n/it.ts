@@ -169,6 +169,7 @@ export const it = {
     syncStatus: "Stato Sincronizzazione",
     lastSync: "Ultima Sincronizzazione",
     syncNow: "Sincronizza Ora",
+    never: "Mai",
     currency: "Valuta",
     about: "Informazioni",
     version: "Versione",

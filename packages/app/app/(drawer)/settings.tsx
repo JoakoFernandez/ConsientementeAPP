@@ -85,7 +85,7 @@ export default function Settings() {
         <Text style={styles.sectionTitle}>{t("settings.sync")}</Text>
         <View style={styles.syncRow}>
           <Text style={styles.syncLabel}>
-            {t("settings.lastSync")}: {lastSync ? lastSync.toLocaleString() : "Nunca"}
+            {t("settings.lastSync")}: {lastSync ? lastSync.toLocaleString() : t("settings.never")}
           </Text>
           <TouchableOpacity style={styles.syncBtn} onPress={syncNow} disabled={syncing}>
             <Text style={styles.syncBtnText}>{syncing ? "..." : t("settings.syncNow")}</Text>
